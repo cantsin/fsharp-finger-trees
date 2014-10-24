@@ -2,9 +2,9 @@ namespace Fingertrees.Tests
 
 open Fingertrees
 open System
+open FsCheck
+open FsCheck.NUnit
 open NUnit.Framework
-// open FsCheck
-// open FsCheck.Nunit
 
 [<TestFixture>]
 module public TestClass =
