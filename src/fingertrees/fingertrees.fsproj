@@ -43,6 +43,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Monoid.fs" />
     <Compile Include="Library.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
