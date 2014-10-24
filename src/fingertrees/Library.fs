@@ -1,4 +1,4 @@
-namespace fingertrees
+namespace Fingertrees
 
 open Monoid
 

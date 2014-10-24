@@ -12,7 +12,7 @@ open System
 open System.IO
 #if MONO
 #else
-#load "packages/SourceLink.Fake/Tools/Fake.fsx"
+#load "packages/SourceLink.Fake/tools/Fake.fsx"
 open SourceLink
 #endif
 
@@ -44,7 +44,7 @@ let authors = [ "James Tranovich" ]
 // Tags for your project (for NuGet package)
 let tags = ""
 
-// File system information 
+// File system information
 let solutionFile  = "fingertrees.sln"
 
 // Pattern specifying assemblies to be tested using NUnit
@@ -52,7 +52,7 @@ let testAssemblies = "tests/**/bin/Release/*Tests*.dll"
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
-let gitOwner = "cantsin" 
+let gitOwner = "cantsin"
 let gitHome = "https://github.com/" + gitOwner
 
 // The name of the project on GitHub
@@ -188,10 +188,10 @@ let generateHelp fail =
             failwith "generating help documentation failed"
         else
             traceImportant "generating help documentation failed"
-    
+
 
 Target "GenerateHelp" (fun _ ->
-    DeleteFile "docs/content/release-notes.md"    
+    DeleteFile "docs/content/release-notes.md"
     CopyFile "docs/content/" "RELEASE_NOTES.md"
     Rename "docs/content/release-notes.md" "docs/content/RELEASE_NOTES.md"
 
@@ -203,7 +203,7 @@ Target "GenerateHelp" (fun _ ->
 )
 
 
-Target "KeepRunning" (fun _ ->    
+Target "KeepRunning" (fun _ ->
     use watcher = new FileSystemWatcher(DirectoryInfo("docs/content").FullName,"*.*")
     watcher.EnableRaisingEvents <- true
     watcher.Changed.Add(fun e -> generateHelp false)
@@ -246,11 +246,11 @@ Target "Release" (fun _ ->
 
     Branches.tag "" release.NugetVersion
     Branches.pushTag "" "origin" release.NugetVersion
-    
+
     // release on github
     createClient (getBuildParamOrDefault "github-user" "") (getBuildParamOrDefault "github-pw" "")
-    |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes 
-    // TODO: |> uploadFile "PATH_TO_FILE"    
+    |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes
+    // TODO: |> uploadFile "PATH_TO_FILE"
     |> releaseDraft
     |> Async.RunSynchronously
 )
@@ -271,7 +271,7 @@ Target "All" DoNothing
   ==> "All"
   =?> ("ReleaseDocs",isLocalBuild && not isMono)
 
-"All" 
+"All"
 #if MONO
 #else
   =?> ("SourceLink", Pdbstr.tryFind().IsSome )
@@ -286,7 +286,7 @@ Target "All" DoNothing
 
 "GenerateHelp"
   ==> "KeepRunning"
-    
+
 "ReleaseDocs"
   ==> "Release"
 
