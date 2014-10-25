@@ -1,23 +1,31 @@
 namespace Fingertrees.Tests
 
-open Fingertrees
 open System
+open Fingertrees
+open NUnit.Framework
 open FsCheck
 open FsCheck.NUnit
-open NUnit.Framework
+open Monoid
 
-[<TestFixture>]
-module public TestClass =
+module public TestSumMonoid =
 
   [<TestFixtureSetUp>]
-  let foo = 5
+  let monoid = SumMonoid()
 
   [<Test>]
-  let ``hello returns 42`` () =
-    let result = Library.hello 42
-    printfn "%i" result
-    Assert.AreEqual(42,result)
+  let ``mempty <> x = x`` () =
+    Check.QuickThrowOnFailure(
+      fun (x: int) ->
+        monoid.mappend monoid.mempty x = x)
 
   [<Test>]
-  let ``When 2 is added to 2 expect 4``() =
-    Assert.AreEqual(4, 2+2)
+  let ``x <> (y <> z) = (x <> y) <> z`` () =
+    Check.QuickThrowOnFailure(
+      fun (x: int, y: int, z: int) ->
+        monoid.mappend (monoid.mappend x y) z = monoid.mappend x (monoid.mappend y z))
+
+  [<Test>]
+  let ``moncat x, y, z = (x <> y) <> z`` () =
+    Check.QuickThrowOnFailure(
+      fun (x: int, y: int, z: int) ->
+        monoid.mconcat [|x; y; z|] = monoid.mappend (monoid.mappend x y) z)

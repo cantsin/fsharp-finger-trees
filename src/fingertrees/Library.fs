@@ -17,16 +17,6 @@ module Library =
   ///  - `num` - whatever
   let hello num = 42
 
-  type SumMonoid() =
-    inherit IMonoid<int>()
-    override this.mempty = 0
-    override this.mappend x y = x + y
-
-  type ProductMonoid() =
-    inherit IMonoid<int>()
-    override this.mempty = 1
-    override this.mappend x y = x * y
-
   [<EntryPoint>]
   let main args =
     printfn "Arguments passed to function : %A" args
