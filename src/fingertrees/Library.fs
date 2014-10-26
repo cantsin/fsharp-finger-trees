@@ -37,6 +37,8 @@ module Library =
     let new_tree2 = match Operations.popr new_tree with
       | View(_, result) -> match Operations.popr result with
         | View(_, result) -> result
+    let int_tree = toTree [1;2;3;4;5;6;7;8;9]
     printfn "original finger tree: %A" new_tree
     printfn "modified finger tree: %A" new_tree2
+    printfn "int tree: %A" int_tree
     0

@@ -214,13 +214,13 @@ module FingerTree
         | View(x, _) -> Some(x)
         | EmptyTree -> None
 
-    static member butlast (this: FingerTree<int, 'T>): FingerTree<int, 'T> =
-      match Operations.popr this with
+    static member rest (this: FingerTree<int, 'T>): FingerTree<int, 'T> =
+      match Operations.popl this with
         | View(_, x) -> x
         | EmptyTree -> Empty
 
-    static member rest (this: FingerTree<int, 'T>): FingerTree<int, 'T> =
-      match Operations.popl this with
+    static member butlast (this: FingerTree<int, 'T>): FingerTree<int, 'T> =
+      match Operations.popr this with
         | View(_, x) -> x
         | EmptyTree -> Empty
 
@@ -232,3 +232,6 @@ module FingerTree
   // shortcut operators for convenience.
   let (<|) = Operations.prepend
   let (|>) = Operations.append
+
+  // construct a finger tree given a list.
+  let toTree arr = List.fold (|>) Empty arr
