@@ -148,6 +148,62 @@ module FingerTree
                            content = content;
                            suffix = suffix })
 
+    static member popr (this: FingerTree<int, 'T>): View<'V, 'T> =
+      let nodeToFinger n =
+        match n with
+          | Branch2(_, a, b) -> Two(a, b)
+          | Branch3(_, a, b, c) -> Three(a, b, c) in
+      match this with
+        | Empty -> EmptyTree
+        | Single(x) -> View(x, Empty)
+        | Digit { Finger.annotation = annotation;
+                  Finger.prefix = prefix;
+                  Finger.content = content;
+                  Finger.suffix = One(x) } ->
+          let rest: FingerTree<'V, 'T> =
+            match Operations.popr content with
+              | View(inner, rest) ->
+                Digit { annotation = 0;
+                        prefix = prefix;
+                        content = rest;
+                        suffix = nodeToFinger(inner) }
+              | EmptyTree ->
+                match prefix : Affix<'T> with
+                  | One(x) -> Single(x)
+                  | Two(x, y) ->
+                    Digit { annotation = 0;
+                            prefix = One(x);
+                            content = Empty;
+                            suffix = One(y) }
+                  // somewhat arbitrary
+                  | Three(x, y, z) ->
+                    Digit { annotation = 0;
+                            prefix = One(x);
+                            content = Empty;
+                            suffix = Two(y, z) }
+                  // somewhat arbitrary
+                  | Four(x, y, z, w) ->
+                    Digit { annotation = 0;
+                            prefix = Two(x, y);
+                            content = Empty;
+                            suffix = Two(z, w) }
+          View(x, rest)
+        | Digit { Finger.annotation = annotation;
+                  Finger.prefix = prefix;
+                  Finger.content = content;
+                  Finger.suffix = suffix } ->
+          let l, newSuffix =
+            match suffix with
+              | One(_) -> failwith "Invalid match."
+              | Two(x, y) -> y, One(x)
+              | Three(x, y, z) -> z, Two(x, y)
+              | Four(x, y, z, w) -> w, Three(x, y, z) in
+              View(l,
+                   Digit { annotation = 0;
+                           prefix = prefix;
+                           content = content;
+                           suffix = newSuffix })
+
   // shortcut operators for convenience.
   let (<|) = Operations.prepend
   let (|>) = Operations.append
