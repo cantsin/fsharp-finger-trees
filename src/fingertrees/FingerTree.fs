@@ -204,6 +204,31 @@ module FingerTree
                            content = content;
                            suffix = newSuffix })
 
+    static member first (this: FingerTree<int, 'T>): Option<'T> =
+      match Operations.popl this with
+        | View(x, _) -> Some(x)
+        | EmptyTree -> None
+
+    static member last (this: FingerTree<int, 'T>): Option<'T> =
+      match Operations.popr this with
+        | View(x, _) -> Some(x)
+        | EmptyTree -> None
+
+    static member butlast (this: FingerTree<int, 'T>): FingerTree<int, 'T> =
+      match Operations.popr this with
+        | View(_, x) -> x
+        | EmptyTree -> Empty
+
+    static member rest (this: FingerTree<int, 'T>): FingerTree<int, 'T> =
+      match Operations.popl this with
+        | View(_, x) -> x
+        | EmptyTree -> Empty
+
+    static member isEmpty (this: FingerTree<int, 'T>): bool =
+      match this with
+        | Empty -> true
+        | _ -> false
+
   // shortcut operators for convenience.
   let (<|) = Operations.prepend
   let (|>) = Operations.append
