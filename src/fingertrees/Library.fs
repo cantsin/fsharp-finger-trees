@@ -33,5 +33,9 @@ module Library =
 
   [<EntryPoint>]
   let main args =
-    printfn "sample finger tree: %A" (test_tree |> 't' |> 'e' |> 's' |> 't' |> 'i' |> 'n' |> 'g')
+    let new_tree = (test_tree |> 't' |> 'e' |> 's' |> 't' |> 'i' |> 'n' |> 'g')
+    let new_tree2 = match Operations.popl new_tree with
+      | View(_, result) -> match Operations.popl result with
+        | View(_, result) -> result
+    printfn "sample finger tree: %A" new_tree2
     0
