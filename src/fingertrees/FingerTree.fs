@@ -1,8 +1,8 @@
 module FingerTree
 
-  type Node<'V, 'T> =
-    | Branch2 of 'V * 'T * 'T
-    | Branch3 of 'V * 'T * 'T * 'T
+  type Node<'T> =
+    | Branch2 of 'T * 'T
+    | Branch3 of 'T * 'T * 'T
 
   type Affix<'T> =
     | One of 'T
@@ -10,24 +10,24 @@ module FingerTree
     | Three of 'T * 'T * 'T
     | Four of 'T * 'T * 'T * 'T
 
-  type Finger<'V, 'T> = {
-    annotation: 'V;
+  type Finger<'T> = {
+    annotation: int;
     prefix: Affix<'T>;
-    content: FingerTree<'V, Node<'V, 'T>>;
+    content: FingerTree<Node<'T>>;
     suffix: Affix<'T>;
-  } and FingerTree<'V, 'T> =
+  } and FingerTree<'T> =
   | Empty
   | Single of 'T
-  | Digit of Finger<int, 'T>
+  | Digit of Finger<'T>
 
-  type View<'V, 'T> =
+  type View<'T> =
     | EmptyTree
-    | View of 'T * FingerTree<'V, 'T>
+    | View of 'T * FingerTree<'T>
 
-  type Operations<'V, 'T>() =
+  type Operations<'T>() =
 
     // worst case: O(lg n). amortized time: O(1)
-    static member prepend (this: FingerTree<int, 'T>) (a: 'T): FingerTree<'V, 'T> =
+    static member prepend (this: FingerTree<'T>) (a: 'T): FingerTree<'T> =
       match this with
         | Empty -> Single(a)
         | Single(x) ->
@@ -42,7 +42,7 @@ module FingerTree
                   Finger.suffix = suffix } ->
           Digit { annotation = 0;
                   prefix = Two(a, p1);
-                  content = Operations.prepend content (Branch3(0, p2, p3, p4));
+                  content = Operations.prepend content (Branch3(p2, p3, p4));
                   suffix = suffix }
         | Digit { Finger.annotation = annotation;
                   Finger.prefix = prefix;
@@ -60,7 +60,7 @@ module FingerTree
                       suffix = suffix }
 
     // worst case: O(lg n). amortized time: O(1)
-    static member append (this: FingerTree<int, 'T>) (a: 'T): FingerTree<'V, 'T> =
+    static member append (this: FingerTree<'T>) (a: 'T): FingerTree<'T> =
       match this with
         | Empty -> Single(a)
         | Single(x) ->
@@ -75,7 +75,7 @@ module FingerTree
                   Finger.suffix = Four(p1, p2, p3, p4) } ->
           Digit { annotation = 0;
                   prefix = prefix;
-                  content = Operations.append content (Branch3(0, p1, p2, p3));
+                  content = Operations.append content (Branch3(p1, p2, p3));
                   suffix = Two(p4, a) }
         | Digit { Finger.annotation = annotation;
                   Finger.prefix = prefix;
@@ -92,11 +92,11 @@ module FingerTree
                       content = content;
                       suffix = newSuffix }
 
-    static member popl (this: FingerTree<int, 'T>): View<'V, 'T> =
+    static member popl (this: FingerTree<'T>): View<'T> =
       let nodeToFinger n =
         match n with
-          | Branch2(_, a, b) -> Two(a, b)
-          | Branch3(_, a, b, c) -> Three(a, b, c) in
+          | Branch2(a, b) -> Two(a, b)
+          | Branch3(a, b, c) -> Three(a, b, c) in
       match this with
         | Empty -> EmptyTree
         | Single(x) -> View(x, Empty)
@@ -104,7 +104,7 @@ module FingerTree
                   Finger.prefix = One(x);
                   Finger.content = content;
                   Finger.suffix = suffix } ->
-          let rest: FingerTree<'V, 'T> =
+          let rest: FingerTree<'T> =
             match Operations.popl content with
               | View(inner, rest) ->
                 Digit { annotation = 0;
@@ -148,11 +148,11 @@ module FingerTree
                            content = content;
                            suffix = suffix })
 
-    static member popr (this: FingerTree<int, 'T>): View<'V, 'T> =
+    static member popr (this: FingerTree<'T>): View<'T> =
       let nodeToFinger n =
         match n with
-          | Branch2(_, a, b) -> Two(a, b)
-          | Branch3(_, a, b, c) -> Three(a, b, c) in
+          | Branch2(a, b) -> Two(a, b)
+          | Branch3(a, b, c) -> Three(a, b, c) in
       match this with
         | Empty -> EmptyTree
         | Single(x) -> View(x, Empty)
@@ -160,7 +160,7 @@ module FingerTree
                   Finger.prefix = prefix;
                   Finger.content = content;
                   Finger.suffix = One(x) } ->
-          let rest: FingerTree<'V, 'T> =
+          let rest: FingerTree<'T> =
             match Operations.popr content with
               | View(inner, rest) ->
                 Digit { annotation = 0;
@@ -204,27 +204,27 @@ module FingerTree
                            content = content;
                            suffix = newSuffix })
 
-    static member first (this: FingerTree<int, 'T>): Option<'T> =
+    static member first (this: FingerTree<'T>): Option<'T> =
       match Operations.popl this with
         | View(x, _) -> Some(x)
         | EmptyTree -> None
 
-    static member last (this: FingerTree<int, 'T>): Option<'T> =
+    static member last (this: FingerTree<'T>): Option<'T> =
       match Operations.popr this with
         | View(x, _) -> Some(x)
         | EmptyTree -> None
 
-    static member rest (this: FingerTree<int, 'T>): FingerTree<int, 'T> =
+    static member rest (this: FingerTree<'T>): FingerTree<'T> =
       match Operations.popl this with
         | View(_, x) -> x
         | EmptyTree -> Empty
 
-    static member butlast (this: FingerTree<int, 'T>): FingerTree<int, 'T> =
+    static member butlast (this: FingerTree<'T>): FingerTree<'T> =
       match Operations.popr this with
         | View(_, x) -> x
         | EmptyTree -> Empty
 
-    static member isEmpty (this: FingerTree<int, 'T>): bool =
+    static member isEmpty (this: FingerTree<'T>): bool =
       match this with
         | Empty -> true
         | _ -> false
@@ -234,4 +234,4 @@ module FingerTree
   let (|>) = Operations.append
 
   // construct a finger tree given a list.
-  let toTree arr = List.fold (|>) Empty arr
+  let toFingerTree arr = List.fold (|>) Empty arr
