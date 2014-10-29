@@ -112,7 +112,7 @@ module FingerTree
                         content = rest;
                         suffix = suffix }
               | EmptyTree ->
-                match suffix : Affix<'T> with
+                match suffix: Affix<'T> with
                   | One(x) -> Single(x)
                   | Two(x, y) ->
                     Digit { annotation = 0;
@@ -168,7 +168,7 @@ module FingerTree
                         content = rest;
                         suffix = nodeToFinger(inner) }
               | EmptyTree ->
-                match prefix : Affix<'T> with
+                match prefix: Affix<'T> with
                   | One(x) -> Single(x)
                   | Two(x, y) ->
                     Digit { annotation = 0;
@@ -229,9 +229,63 @@ module FingerTree
         | Empty -> true
         | _ -> false
 
+    // amortized O(lg(min(m,n)))
+    static member private _concat (left: FingerTree<'T>) (middle: list<'T>) (right: FingerTree<'T>): FingerTree<'T> =
+      match(left, middle, right) with
+        // trivial cases.
+        | Empty, [], right -> right
+        | left, [], Empty -> left
+        // single trees.
+        | Single(y), xs, right ->
+          let rightTree: FingerTree<'T> = Operations._concat Empty xs right
+          Operations.prepend rightTree y
+        | left, xs, Single(y) ->
+          let leftTree: FingerTree<'T> = Operations._concat left xs Empty
+          Operations.append leftTree y
+        // joining the middle.
+        | Empty, x :: xs, right ->
+          let rightTree: FingerTree<'T> = Operations._concat Empty xs right
+          Operations.prepend rightTree x
+        | left, l, Empty ->
+          // could be optimized better.
+          let x = Seq.last l
+          let xs = Seq.take (List.length l - 1) l |> Seq.toList
+          let leftTree: FingerTree<'T> = Operations._concat left xs Empty
+          Operations.append leftTree x
+        // the complex case.
+        | left, middle, right ->
+          let (Digit leftDigit) = left
+          let (Digit rightDigit) = right
+          // to handle the left suffix + middle + right prefix case,
+          // we convert 'em all to a list, concatenate, and then
+          // reconstruct the result as nodes.
+          let listify affix =
+            match affix with
+              | One(x) -> [x]
+              | Two(x, y) -> [x; y]
+              | Three(x, y, z) -> [x; y; z]
+              | Four(x, y, z, w) -> [x; y; z; w]
+          let mergeAll = List.concat [listify leftDigit.suffix;
+                                      middle;
+                                      listify rightDigit.prefix]
+          let rec listToNode l =
+            match l with
+              | [x; y] -> [Branch2(x, y)]
+              | [x; y; z] -> [Branch3(x, y, z)]
+              | x :: (y :: xs) -> [Branch2(x, y)] @ listToNode xs
+          let middle' = listToNode mergeAll
+          let content = Operations._concat leftDigit.content middle' rightDigit.content
+          Digit { annotation = 0;
+                  prefix = leftDigit.prefix;
+                  content = content;
+                  suffix = rightDigit.suffix }
+
+    static member concat (this: FingerTree<'T>) (that: FingerTree<'T>): FingerTree<'T> =
+      Operations._concat this [] that
+
   // shortcut operators for convenience.
-  let (<|) = Operations.prepend
-  let (|>) = Operations.append
+  let (<||) = Operations.prepend
+  let (||>) = Operations.append
 
   // construct a finger tree given a list.
-  let toFingerTree arr = List.fold (|>) Empty arr
+  let toFingerTree arr = List.fold (||>) Empty arr

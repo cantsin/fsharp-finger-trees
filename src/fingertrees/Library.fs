@@ -33,14 +33,17 @@ module Library =
 
   [<EntryPoint>]
   let main args =
-    let new_tree = (test_tree |> 't' |> 'e' |> 's' |> 't' |> 'i' |> 'n' |> 'g')
+    let new_tree = (test_tree ||> 't' ||> 'e' ||> 's' ||> 't' ||> 'i' ||> 'n' ||> 'g')
     let new_tree2 =
       match Operations.popr new_tree with
         | View(_, result) ->
           match Operations.popr result with
             | View(_, result) -> result
     let int_tree = toFingerTree [1;2;3;4;5;6;7;8;9]
+    let int_tree_doubled = toFingerTree [1;2;3;4;5;6;7;8;9;1;2;3;4;5;6;7;8;9]
     printfn "original finger tree: %A" new_tree
     printfn "modified finger tree: %A" new_tree2
     printfn "int tree: %A" int_tree
+    printfn "concatenated tree: %A" (Operations.concat int_tree int_tree)
+    printfn "comparison tree: %A" int_tree_doubled
     0
