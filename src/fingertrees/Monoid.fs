@@ -2,10 +2,10 @@ namespace Fingertrees
 
 module Monoid =
   [<AbstractClass>]
-  type IMonoid<'a>() =
-    abstract member mempty : 'a
-    abstract member mappend : 'a -> 'a -> 'a
-    abstract member mconcat : seq<'a> -> 'a
+  type IMonoid<'T>() =
+    abstract member mempty : 'T
+    abstract member mappend : 'T -> 'T -> 'T
+    abstract member mconcat : seq<'T> -> 'T
     default this.mconcat arr = Seq.fold this.mappend this.mempty arr
 
   // some implementations.
@@ -19,7 +19,7 @@ module Monoid =
     override this.mempty = 1
     override this.mappend x y = x * y
 
-  type ListMonoid<'a>() =
-    inherit IMonoid<list<'a>>()
+  type ListMonoid<'V>() =
+    inherit IMonoid<list<'V>>()
     override this.mempty = []
     override this.mappend x y = List.append x y
