@@ -18,6 +18,13 @@ module Library =
       member this.fmeasure =
         Size(1)
 
+  // shortcut operators for convenience.
+  let (<||) = Operations.prepend
+  let (||>) = Operations.append
+
+  // construct a finger tree given a list.
+  let toFingerTree arr = List.fold (||>) Empty arr
+
   // test an example tree by hand
   let prefix1: Affix<Size, Value<char>> =
     Two(Value('t'),Value('h'))

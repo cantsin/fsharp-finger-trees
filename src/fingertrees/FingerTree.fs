@@ -7,6 +7,17 @@ module FingerTree =
   type IMeasured<'V, 'T when 'V :> IMonoid<'V>> =
     abstract member fmeasure: 'V
 
+  // monoid handling functions via IMeasured
+  let fmeasure m = (m :> IMeasured<'V, 'T>).fmeasure
+  let mconcat list =
+    match list with
+      | [] -> failwith "empty."
+      | [x] -> fmeasure x
+      | (x :: xs) ->
+      let monoid = fmeasure x
+      List.map fmeasure xs |>
+      List.fold monoid.mappend monoid
+
   type Node<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> =
     | Branch2 of 'V * 'T * 'T
     | Branch3 of 'V * 'T * 'T * 'T
@@ -23,24 +34,11 @@ module FingerTree =
     | Four of 'T * 'T * 'T * 'T
     interface IMeasured<'V, 'T> with
       member this.fmeasure: 'V =
-        let getMeasure m = (m :> IMeasured<'V, 'T>).fmeasure
         match this with
-          | One(x) -> getMeasure(x)
-          | Two(x, y) ->
-            let m1 = (x :> IMeasured<'V, 'T>).fmeasure
-            let m2 = (y :> IMeasured<'V, 'T>).fmeasure
-            m1.mappend m1 m2
-          | Three(x, y, z) ->
-            let m1 = (x :> IMeasured<'V, 'T>).fmeasure
-            let m2 = (y :> IMeasured<'V, 'T>).fmeasure
-            let m3 = (z :> IMeasured<'V, 'T>).fmeasure
-            m1.mappend (m1.mappend m1 m2) m3
-          | Four(x, y, z, w) ->
-            let m1 = (x :> IMeasured<'V, 'T>).fmeasure
-            let m2 = (y :> IMeasured<'V, 'T>).fmeasure
-            let m3 = (z :> IMeasured<'V, 'T>).fmeasure
-            let m4 = (w :> IMeasured<'V, 'T>).fmeasure
-            m1.mappend (m1.mappend (m1.mappend m1 m2) m3) m4
+          | One(x) -> mconcat [x]
+          | Two(x, y) -> mconcat [x; y]
+          | Three(x, y, z) -> mconcat [x; y; z]
+          | Four(x, y, z, w) -> mconcat [x; y; z; w]
 
   type Finger<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> = {
     annotation: 'V;
@@ -56,13 +54,10 @@ module FingerTree =
     interface IMeasured<'V, 'T> with
       member this.fmeasure: 'V =
         match this with
-        | Empty -> (this :> IMeasured<'V, 'T>).fmeasure.mempty
-        | Single(x) -> (x :> IMeasured<'V, 'T>).fmeasure
+        | Empty -> (fmeasure this).mempty
+        | Single(x) -> fmeasure x
         | Digit(d) -> d.annotation
 
   type View<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> =
     | EmptyTree
     | View of 'T * FingerTree<'V, 'T>
-
-  // // construct a finger tree given a list.
-  // let toFingerTree arr = List.fold (||>) Empty arr
