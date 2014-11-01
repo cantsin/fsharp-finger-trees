@@ -75,6 +75,28 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
                     content = content;
                     suffix = newSuffix }
 
+  // helper function: convert affix to a balanced fingertree.
+  static member _affixToTree (affix: Affix<'V, 'T>): FingerTree<'V, 'T> =
+    match affix with
+      | One(x) -> Single(x)
+      | Two(x, y) ->
+        Digit { annotation = fmeasure affix,
+                prefix = One(x),
+                Empty,
+                suffix = One(y) }
+      // somewhat arbitrary
+      | Three(x, y, z) ->
+        Digit { annotation = fmeasure affix,
+                prefix = One(x),
+                Empty,
+                suffix = Two(y, z) }
+      // somewhat arbitrary
+      | Four(x, y, z, w) ->
+        Digit { annotation = fmeasure affix,
+                prefix = One(x, y),
+                Empty,
+                suffix = Two(z, w) }
+
   static member popl (this: FingerTree<'V, 'T>): View<'V, 'T> =
     let nodeToFinger n =
       match n with
@@ -97,26 +119,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
                       prefix = prefix;
                       content = rest;
                       suffix = suffix }
-            | EmptyTree ->
-              match suffix: Affix<'V, 'T> with
-                | One(x) -> Single(x)
-                | Two(x, y) ->
-                  Digit { annotation = annotation; //XXX
-                          prefix = One(x);
-                          content = Empty;
-                          suffix = One(y) }
-                // somewhat arbitrary
-                | Three(x, y, z) ->
-                  Digit { annotation = annotation; //XXX
-                          prefix = Two(x, y);
-                          content = Empty;
-                          suffix = One(z) }
-                // somewhat arbitrary
-                | Four(x, y, z, w) ->
-                  Digit { annotation = annotation; //XXX
-                          prefix = Two(x, y);
-                          content = Empty;
-                          suffix = Two(z, w) }
+            | EmptyTree -> _affixToTree suffix
         View(x, rest)
       | Digit { Finger.annotation = annotation;
                 Finger.prefix = prefix;
@@ -155,26 +158,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
                       prefix = prefix;
                       content = rest;
                       suffix = suffix }
-            | EmptyTree ->
-              match prefix: Affix<'V, 'T> with
-                | One(x) -> Single(x)
-                | Two(x, y) ->
-                  Digit { annotation = annotation; //XXX
-                          prefix = One(x);
-                          content = Empty;
-                          suffix = One(y) }
-                // somewhat arbitrary
-                | Three(x, y, z) ->
-                  Digit { annotation = annotation; //XXX
-                          prefix = One(x);
-                          content = Empty;
-                          suffix = Two(y, z) }
-                // somewhat arbitrary
-                | Four(x, y, z, w) ->
-                  Digit { annotation = annotation; //XXX
-                          prefix = Two(x, y);
-                          content = Empty;
-                          suffix = Two(z, w) }
+            | EmptyTree -> _affixToTree prefix
         View(x, rest)
       | Digit { Finger.annotation = annotation;
                 Finger.prefix = prefix;
