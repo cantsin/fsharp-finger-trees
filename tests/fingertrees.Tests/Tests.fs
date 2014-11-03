@@ -9,6 +9,12 @@ open Monoid
 
 module public TestSumMonoid =
 
+  type SumMonoid() =
+//    interface IMonoid<int> with
+    member this.mempty = 0
+    member this.mappend x y = x + y
+    member this.mconcat arr = Seq.fold this.mappend this.mempty arr
+
   [<TestFixtureSetUp>]
   let monoid = SumMonoid()
 

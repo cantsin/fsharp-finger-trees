@@ -76,25 +76,25 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
                     suffix = newSuffix }
 
   // helper function: convert affix to a balanced fingertree.
-  static member _affixToTree (affix: Affix<'V, 'T>): FingerTree<'V, 'T> =
+  static member private _affixToTree (affix: Affix<'V, 'T>): FingerTree<'V, 'T> =
     match affix with
       | One(x) -> Single(x)
       | Two(x, y) ->
-        Digit { annotation = fmeasure affix,
-                prefix = One(x),
-                Empty,
+        Digit { annotation = fmeasure affix;
+                prefix = One(x);
+                content = Empty;
                 suffix = One(y) }
-      // somewhat arbitrary
+      // arbitrarily chosen
       | Three(x, y, z) ->
-        Digit { annotation = fmeasure affix,
-                prefix = One(x),
-                Empty,
+        Digit { annotation = fmeasure affix;
+                prefix = One(x);
+                content = Empty;
                 suffix = Two(y, z) }
-      // somewhat arbitrary
+      // arbitrarily chosen
       | Four(x, y, z, w) ->
-        Digit { annotation = fmeasure affix,
-                prefix = One(x, y),
-                Empty,
+        Digit { annotation = fmeasure affix;
+                prefix = Two(x, y);
+                content = Empty;
                 suffix = Two(z, w) }
 
   static member popl (this: FingerTree<'V, 'T>): View<'V, 'T> =
@@ -119,7 +119,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
                       prefix = prefix;
                       content = rest;
                       suffix = suffix }
-            | EmptyTree -> _affixToTree suffix
+            | EmptyTree -> Operations._affixToTree suffix
         View(x, rest)
       | Digit { Finger.annotation = annotation;
                 Finger.prefix = prefix;
@@ -158,7 +158,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
                       prefix = prefix;
                       content = rest;
                       suffix = suffix }
-            | EmptyTree -> _affixToTree prefix
+            | EmptyTree -> Operations._affixToTree prefix
         View(x, rest)
       | Digit { Finger.annotation = annotation;
                 Finger.prefix = prefix;
