@@ -61,3 +61,6 @@ module FingerTree =
   type View<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> =
     | EmptyTree
     | View of 'T * FingerTree<'V, 'T>
+
+  type Split<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> =
+    FingerTree<'V, 'T> * 'T * FingerTree<'V, 'T>

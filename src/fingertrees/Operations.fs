@@ -261,3 +261,35 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
   static member concat (this: FingerTree<'V, 'T>)
                        (that: FingerTree<'V, 'T>): FingerTree<'V, 'T> =
     Operations._concat this [] that
+
+  // helper function: split list at predicate.
+  static member private _splitList list predicate value =
+    let monoid = fmeasure value
+    // List.partition (fun item -> predicate (monoid.mappend item monoid)) list
+    match list with
+      | [] -> failwith "list split could not be found."
+      | x :: xs ->
+        let start = monoid.mappend x monoid
+        if predicate start then
+          ([], x::xs)
+        else
+          let (before, after) = Operations<'V, 'T>._splitList xs predicate start
+          (x::before, after)
+
+  // helper function: split affix into fingertree * value * fingertree.
+  static member private _splitAffix affix predicate value =
+    let monoid = fmeasure value
+    let aot x = Operations._affixToTree x // save some typing
+    let isSplit x = predicate (monoid.mappend x monoid)
+    match affix with
+      | One(x) when isSplit x           -> Empty,                x, Empty
+      | Two(x, y) when isSplit x        -> Empty,                x, aot (One(y))
+      | Two(x, y) when isSplit y        -> aot (One(x)),         y, Empty
+      | Three(x, y, z) when isSplit x   -> Empty,                x, aot (Two(y, z))
+      | Three(x, y, z) when isSplit y   -> aot (One(x)),         y, aot (One(z))
+      | Three(x, y, z) when isSplit z   -> aot (Two(x, y)),      z, Empty
+      | Four(x, y, z, w) when isSplit x -> Empty,                x, aot (Three(y, z, w))
+      | Four(x, y, z, w) when isSplit y -> aot (One(x)),         y, aot (Two(z, w))
+      | Four(x, y, z, w) when isSplit z -> aot (Two(x, y)),      z, aot (One(w))
+      | Four(x, y, z, w) when isSplit w -> aot (Three(x, y, z)), w, Empty
+      | _ -> failwith "affix split could not be found."
