@@ -14,7 +14,8 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
     match this with
       | Empty -> Single(a)
       | Single(x) ->
-        Digit { annotation = fmeasure x;
+        let newAnnotation = mconcat [a; x]
+        Digit { annotation = newAnnotation
                 prefix = One(a);
                 content = Empty;
                 suffix = One(x) }
@@ -23,21 +24,25 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
                 Finger.prefix = Four(p1, p2, p3, p4);
                 Finger.content = content;
                 Finger.suffix = suffix } ->
-        let new_annotation = (fmeasure a).mappend annotation (fmeasure content)
-        Digit { annotation = annotation;
+        let monoid = fmeasure a
+        let newAnnotation = monoid.mappend annotation monoid
+        let branchAnnotation = mconcat [p1; p2; p3]
+        Digit { annotation = newAnnotation;
                 prefix = Two(a, p1);
-                content = Operations.prepend content (Branch3(new_annotation, p2, p3, p4));
+                content = Operations.prepend content (Branch3(branchAnnotation, p2, p3, p4));
                 suffix = suffix }
       | Digit { Finger.annotation = annotation;
                 Finger.prefix = prefix;
                 Finger.content = content;
                 Finger.suffix = suffix } ->
+        let monoid = fmeasure a
+        let newAnnotation = monoid.mappend annotation monoid
         let newPrefix =
           match prefix with
             | One(x) -> Two(a, x)
             | Two(x, y) -> Three(a, x, y)
             | Three(x, y, z) -> Four(a, x, y, z) in
-            Digit { annotation = annotation;
+            Digit { annotation = newAnnotation;
                     prefix = newPrefix;
                     content = content;
                     suffix = suffix }
@@ -47,7 +52,8 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
     match this with
       | Empty -> Single(a)
       | Single(x) ->
-        Digit { annotation = fmeasure x;
+        let newAnnotation = mconcat [a; x]
+        Digit { annotation = newAnnotation
                 prefix = One(x);
                 content = Empty;
                 suffix = One(a) }
@@ -56,21 +62,25 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
                 Finger.prefix = prefix;
                 Finger.content = content;
                 Finger.suffix = Four(p1, p2, p3, p4) } ->
-        let new_annotation = (fmeasure a).mappend annotation (fmeasure content)
-        Digit { annotation = annotation;
+        let monoid = fmeasure a
+        let newAnnotation = monoid.mappend annotation monoid
+        let branchAnnotation = mconcat [p1; p2; p3]
+        Digit { annotation = newAnnotation;
                 prefix = prefix;
-                content = Operations.append content (Branch3(new_annotation, p1, p2, p3));
+                content = Operations.append content (Branch3(branchAnnotation, p1, p2, p3));
                 suffix = Two(p4, a) }
       | Digit { Finger.annotation = annotation;
                 Finger.prefix = prefix;
                 Finger.content = content;
                 Finger.suffix = suffix } ->
+        let monoid = fmeasure a
+        let newAnnotation = monoid.mappend annotation monoid
         let newSuffix =
           match suffix with
             | One(x) -> Two(x, a)
             | Two(x, y) -> Three(x, y, a)
             | Three(x, y, z) -> Four(x, y, z, a) in
-            Digit { annotation = annotation;
+            Digit { annotation = newAnnotation;
                     prefix = prefix;
                     content = content;
                     suffix = newSuffix }
@@ -114,8 +124,8 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
             | View(inner, rest) ->
               let prefix = nodeToFinger(inner)
               let monoid = fmeasure rest
-              let new_annotation = monoid.mappend (mconcat [prefix; suffix]) (fmeasure rest)
-              Digit { annotation = new_annotation;
+              let newAnnotation = monoid.mappend (mconcat [prefix; suffix]) (fmeasure rest)
+              Digit { annotation = newAnnotation;
                       prefix = prefix;
                       content = rest;
                       suffix = suffix }
@@ -155,8 +165,8 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
             | View(inner, rest) ->
               let suffix = nodeToFinger(inner)
               let monoid = fmeasure rest
-              let new_annotation = monoid.mappend (mconcat [prefix; suffix]) (fmeasure rest)
-              Digit { annotation = new_annotation;
+              let newAnnotation = monoid.mappend (mconcat [prefix; suffix]) (fmeasure rest)
+              Digit { annotation = newAnnotation;
                       prefix = prefix;
                       content = rest;
                       suffix = suffix }
@@ -172,7 +182,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
             | Three(x, y, z) -> z, Two(x, y)
             | Four(x, y, z, w) -> w, Three(x, y, z) in
             let monoid = fmeasure prefix
-            let newAnnotation = monoid.mappend monoid (monoid.mappend (fmeasure content) (fmeasure l))
+            let newAnnotation = monoid.mappend monoid (monoid.mappend annotation (fmeasure newSuffix))
             View(l,
                  Digit { annotation = newAnnotation;
                          prefix = prefix;
@@ -256,8 +266,8 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
         let content = Operations._concat leftDigit.content middle' rightDigit.content
         let newPrefix = leftDigit.prefix
         let newSuffix = rightDigit.suffix
-        let new_annotation = monoid.mappend (fmeasure newPrefix) (fmeasure newSuffix)
-        Digit { annotation = annotation;
+        let newAnnotation = monoid.mappend (fmeasure newPrefix) (fmeasure newSuffix)
+        Digit { annotation = newAnnotation;
                 prefix = newPrefix;
                 content = content;
                 suffix = newSuffix }

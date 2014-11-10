@@ -22,52 +22,76 @@ module Library =
   let (<||) = Operations.prepend
   let (||>) = Operations.append
 
-  // construct a finger tree given a list.
+  // TODO independent of Size?
+  let index tree idx =
+    if idx < 0 then
+      // TODO annotation on Finger
+      None
+    else
+      let (_, h, _) = Operations.split tree (fun x -> x > Size idx) (Size 0)
+      Some(h)
+
+  // construct a finger tree given a list or string.
   let toFingerTree arr = List.fold (||>) Empty arr
+  // TODO independent of Value?
+  let stringToFingerTree str = [for c in str -> Value c] |> toFingerTree
+
+  let sft = stringToFingerTree "thisisnotatree"
 
   // test an example tree by hand
   let prefix1: Affix<Size, Value<char>> =
     Two(Value('t'),Value('h'))
   let prefix2: Affix<Size, Node<Size, Value<char>>> =
-      Two(Branch2(Size(1),
+      Two(Branch2(Size(2),
                   Value('i'),Value('s')),
           Branch2(Size(2),
                   Value('i'),Value('s')));
   let suffix2: Affix<Size, Node<Size, Value<char>>> =
     Two(Branch3(Size(3),
                 Value('n'),Value('o'),Value('t')),
-        Branch2(Size(4),
+        Branch2(Size(2),
                 Value('a'),Value('t')));
   let suffix1: Affix<Size, Value<char>> =
     Three(Value('r'),Value('e'),Value('e'));
 
   let content1: Finger<Size, Node<Size, Value<char>>> =
-      { annotation = Size(1);
+      { annotation = Size(9);
         prefix = prefix2;
         content = Empty;
         suffix = suffix2; };
   let content2: Finger<Size, Value<char>> =
-    { annotation = Size(0);
+    { annotation = Size(14);
       prefix = prefix1;
       content = Digit(content1);
       suffix = suffix1 };
-  let test_tree: FingerTree<Size, Value<char>> =
+  let testTree: FingerTree<Size, Value<char>> =
     Digit(content2);
 
   [<EntryPoint>]
   let main args =
-    // let new_tree = (test_tree ||> 't' ||> 'e' ||> 's' ||> 't' ||> 'i' ||> 'n' ||> 'g')
-    // let new_tree2 =
-    //   match Operations.popr new_tree with
+    // let newTree = (testTree ||> 't' ||> 'e' ||> 's' ||> 't' ||> 'i' ||> 'n' ||> 'g')
+    // let intTree = toFingerTree [1;2;3;4;5;6;7;8;9]
+    // let intTreeDoubled = toFingerTree [1;2;3;4;5;6;7;8;9;1;2;3;4;5;6;7;8;9]
+    // printfn "original finger tree: %A" newTree
+    // printfn "modified finger tree: %A" newTree2
+    // printfn "int tree: %A" intTree
+    // printfn "concatenated tree: %A" (Operations.concat intTree intTree)
+    // printfn "comparison tree: %A" intTreeDoubled
+    printfn "testing monadic tree: %A" testTree
+    printfn "testing string tree: %A" sft
+    // let secondary =
+    //   match Operations.popr sft with
     //     | View(_, result) ->
     //       match Operations.popr result with
-    //         | View(_, result) -> result
-    // let int_tree = toFingerTree [1;2;3;4;5;6;7;8;9]
-    // let int_tree_doubled = toFingerTree [1;2;3;4;5;6;7;8;9;1;2;3;4;5;6;7;8;9]
-    // printfn "original finger tree: %A" new_tree
-    // printfn "modified finger tree: %A" new_tree2
-    // printfn "int tree: %A" int_tree
-    // printfn "concatenated tree: %A" (Operations.concat int_tree int_tree)
-    // printfn "comparison tree: %A" int_tree_doubled
-    printfn "testing monadic tree: %A" test_tree
+    //         | View(_, result) ->
+    //         match Operations.popr result with
+    //           | View(_, result) ->
+    //             match Operations.popr result with
+    //               | View(_, result) ->
+    //               match Operations.popr result with
+    //                 | View(_, result) -> result
+    // printfn "secondary: %A" secondary
+
+    // let i = index sft 0
+    // printfn "index 0: %A" i
     0
