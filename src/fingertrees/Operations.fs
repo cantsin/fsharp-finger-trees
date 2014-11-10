@@ -293,3 +293,113 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
       | Four(x, y, z, w) when isSplit z -> aot (Two(x, y)),      z, aot (One(w))
       | Four(x, y, z, w) when isSplit w -> aot (Three(x, y, z)), w, Empty
       | _ -> failwith "affix split could not be found."
+
+  static member private _affixToList a =
+    match a with
+      | One(x) -> [x]
+      | Two(x, y) -> [x; y]
+      | Three(x, y, z) -> [x; y; z]
+      | Four(x, y, z, w) -> [x; y; z; w]
+
+  static member private _nodeToList (n: Node<'V, 'T>): List<'T> =
+    match n with
+      | Branch2(_, x, y) -> [x; y]
+      | Branch3(_, x, y, z) -> [x; y; z]
+
+  static member private _listToAffix l =
+    match l with
+      | [x] -> One(x)
+      | [x; y] -> Two(x, y)
+      | [x; y; z] -> Three(x, y, z)
+      | [x; y; z; w] -> Four(x, y, z, w)
+      | _ -> failwith "invalid arg."
+
+  // helper function: given a list, a tree, and a list, re-create a fingertree.
+  static member private _digit (prefix: List<'T>)
+                               (digit: FingerTree<'V, Node<'V, 'T>>)
+                               (suffix: List<'T>) : FingerTree<'V, 'T> =
+    match prefix, suffix with
+      | [], [] ->
+        match Operations<'V, Node<'V, 'T>>.popl digit with
+          | EmptyTree -> Empty
+          | View(item, rest) ->
+            let newPrefix = Operations<'V, 'T>._nodeToList item
+            Operations<'V, 'T>._digit newPrefix rest []
+      | [], _ ->
+        match Operations<'V, Node<'V, 'T>>.popr digit with
+          | EmptyTree ->
+            Operations<'V, 'T>._listToAffix suffix |> Operations._affixToTree
+          | View(item, rest) ->
+            let newPrefix = Operations<'V, 'T>._nodeToList item
+            Operations<'V, 'T>._digit newPrefix rest suffix
+      | _, [] ->
+        match Operations<'V, Node<'V, 'T>>.popr digit with
+          | EmptyTree ->
+            Operations<'V, 'T>._listToAffix prefix |> Operations._affixToTree
+          | View(item, rest) ->
+            let newSuffix = Operations<'V, 'T>._nodeToList item
+            Operations<'V, 'T>._digit prefix rest newSuffix
+      | _ ->
+        assert (List.length prefix <= 4)
+        assert (List.length suffix <= 4)
+        let newPrefix = Operations<'V, 'T>._listToAffix prefix
+        let newSuffix = Operations<'V, 'T>._listToAffix suffix
+        // XXX. fix this.
+        // let annotation = mconcat [List.map fmeasure prefix |> mconcat;
+        //                           fmeasure digit;
+        //                           List.map fmeasure suffix |> mconcat]
+        let annotation = fmeasure digit
+        Digit { annotation = annotation;
+                prefix = newPrefix;
+                content = digit;
+                suffix = newSuffix }
+
+  static member private _chunkToTree l =
+    match l with
+      | [] -> Empty
+      | xs -> Operations<'V, 'T>._listToAffix xs |> Operations._affixToTree
+
+  // predicate must be monotonic.
+  // value is the annotation on the left-most subsequence
+  static member split (this: FingerTree<'V, 'T>)
+                      (predicate: 'V -> bool)
+                      (value: 'V): Split<'V, 'T> =
+    if predicate value then
+      failwith "predicate is always true."
+    match this with
+      | Single(x)
+          when predicate ((fmeasure x).mappend value (fmeasure x)) ->
+            Empty, x, Empty
+      | Digit { Finger.annotation = annotation;
+                Finger.prefix = prefix;
+                Finger.content = content;
+                Finger.suffix = suffix }
+          when predicate (annotation.mappend value annotation) ->
+          let monoid = fmeasure prefix
+          let starting = monoid.mappend value monoid
+          let prefixList = Operations<'V, 'T>._affixToList prefix
+          let suffixList = Operations<'V, 'T>._affixToList suffix
+          if predicate starting then
+            // split point is in prefix.
+            let (before, hit :: after) = Operations<'V, 'T>._splitList prefixList predicate value
+            let newTree = Operations<'V, 'T>._digit after content suffixList
+            let newBefore = Operations<'V, 'T>._chunkToTree before
+            newBefore, hit, newTree
+          elif mconcat [starting; (fmeasure content)] |> predicate then
+            // split point is in nested tree.
+            failwith "not implemented."
+            // let before, hit, after = Operations<'V, 'T>.split content predicate starting
+            // let newValue = mconcat [value; monoid; fmeasure before]
+            // let newNode = Operations._nodeToList hit
+            // let (before', hit' :: after') = Operations<'V, 'T>._splitList newNode predicate newValue
+            // let prefixTree = Operations<'V, 'T>._digit prefixList before before'
+            // let suffixTree = Operations<'V, 'T>._digit after' after suffixList
+            // prefixTree, hit, suffixTree
+          else
+            // split point is in suffix.
+            let newValue = monoid.mappend starting (fmeasure content)
+            let (before, hit :: after) = Operations<'V, 'T>._splitList suffixList predicate newValue
+            let newTree = Operations<'V, 'T>._digit prefixList content before
+            let newAfter = Operations<'V, 'T>._chunkToTree after
+            newTree, hit, newAfter
+      | _ -> failwith "split could not be found."
