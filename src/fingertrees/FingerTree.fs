@@ -9,7 +9,7 @@ module FingerTree =
 
   // monoid handling functions via IMeasured
   let fmeasure m = (m :> IMeasured<'V, 'T>).fmeasure
-  let mconcat list =
+  let mconcat (list: List<'V>) =
     match list with
       | [] -> failwith "empty."
       | [x] -> fmeasure x

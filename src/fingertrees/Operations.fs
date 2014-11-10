@@ -70,7 +70,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
             | One(x) -> Two(x, a)
             | Two(x, y) -> Three(x, y, a)
             | Three(x, y, z) -> Four(x, y, z, a) in
-            Digit { annotation = annotation; //XXX
+            Digit { annotation = annotation;
                     prefix = prefix;
                     content = content;
                     suffix = newSuffix }
@@ -130,8 +130,10 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
             | Two(x, y) -> x, One(y)
             | Three(x, y, z) -> x, Two(y, z)
             | Four(x, y, z, w) -> x, Three(y, z, w) in
+            let monoid = fmeasure suffix
+            let newAnnotation = monoid.mappend monoid (monoid.mappend (fmeasure content) (fmeasure l))
             View(l,
-                 Digit { annotation = annotation; //XXX
+                 Digit { annotation = newAnnotation;
                          prefix = newPrefix;
                          content = content;
                          suffix = suffix })
@@ -169,8 +171,10 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
             | Two(x, y) -> y, One(x)
             | Three(x, y, z) -> z, Two(x, y)
             | Four(x, y, z, w) -> w, Three(x, y, z) in
+            let monoid = fmeasure prefix
+            let newAnnotation = monoid.mappend monoid (monoid.mappend (fmeasure content) (fmeasure l))
             View(l,
-                 Digit { annotation = annotation;
+                 Digit { annotation = newAnnotation;
                          prefix = prefix;
                          content = content;
                          suffix = newSuffix })
@@ -263,36 +267,18 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
     Operations._concat this [] that
 
   // helper function: split list at predicate.
-  static member private _splitList list predicate value =
-    let monoid = fmeasure value
-    // List.partition (fun item -> predicate (monoid.mappend item monoid)) list
+  static member private _splitList (list: List<'T>)
+                                   (predicate: 'V -> bool)
+                                   (value: 'V): (List<'T> * List<'T>) =
     match list with
       | [] -> failwith "list split could not be found."
       | x :: xs ->
-        let start = monoid.mappend x monoid
+        let start = value.mappend (fmeasure x) value
         if predicate start then
           ([], x::xs)
         else
           let (before, after) = Operations<'V, 'T>._splitList xs predicate start
           (x::before, after)
-
-  // helper function: split affix into fingertree * value * fingertree.
-  static member private _splitAffix affix predicate value =
-    let monoid = fmeasure value
-    let aot x = Operations._affixToTree x // save some typing
-    let isSplit x = predicate (monoid.mappend x monoid)
-    match affix with
-      | One(x) when isSplit x           -> Empty,                x, Empty
-      | Two(x, y) when isSplit x        -> Empty,                x, aot (One(y))
-      | Two(x, y) when isSplit y        -> aot (One(x)),         y, Empty
-      | Three(x, y, z) when isSplit x   -> Empty,                x, aot (Two(y, z))
-      | Three(x, y, z) when isSplit y   -> aot (One(x)),         y, aot (One(z))
-      | Three(x, y, z) when isSplit z   -> aot (Two(x, y)),      z, Empty
-      | Four(x, y, z, w) when isSplit x -> Empty,                x, aot (Three(y, z, w))
-      | Four(x, y, z, w) when isSplit y -> aot (One(x)),         y, aot (Two(z, w))
-      | Four(x, y, z, w) when isSplit z -> aot (Two(x, y)),      z, aot (One(w))
-      | Four(x, y, z, w) when isSplit w -> aot (Three(x, y, z)), w, Empty
-      | _ -> failwith "affix split could not be found."
 
   static member private _affixToList a =
     match a with
@@ -344,11 +330,9 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
         assert (List.length suffix <= 4)
         let newPrefix = Operations<'V, 'T>._listToAffix prefix
         let newSuffix = Operations<'V, 'T>._listToAffix suffix
-        // XXX. fix this.
-        // let annotation = mconcat [List.map fmeasure prefix |> mconcat;
-        //                           fmeasure digit;
-        //                           List.map fmeasure suffix |> mconcat]
-        let annotation = fmeasure digit
+        let monoid = fmeasure digit
+        let list = List.concat [List.map fmeasure prefix; List.map fmeasure suffix]
+        let annotation = List.fold monoid.mappend monoid list
         Digit { annotation = annotation;
                 prefix = newPrefix;
                 content = digit;
@@ -385,16 +369,15 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
             let newTree = Operations<'V, 'T>._digit after content suffixList
             let newBefore = Operations<'V, 'T>._chunkToTree before
             newBefore, hit, newTree
-          elif mconcat [starting; (fmeasure content)] |> predicate then
+          elif monoid.mappend starting (fmeasure content) |> predicate then
             // split point is in nested tree.
-            failwith "not implemented."
-            // let before, hit, after = Operations<'V, 'T>.split content predicate starting
-            // let newValue = mconcat [value; monoid; fmeasure before]
-            // let newNode = Operations._nodeToList hit
-            // let (before', hit' :: after') = Operations<'V, 'T>._splitList newNode predicate newValue
-            // let prefixTree = Operations<'V, 'T>._digit prefixList before before'
-            // let suffixTree = Operations<'V, 'T>._digit after' after suffixList
-            // prefixTree, hit, suffixTree
+            let before, hit, after = Operations<'V, Node<'V, 'T>>.split content predicate starting
+            let newValue = monoid.mappend (monoid.mappend starting (fmeasure prefix)) (fmeasure before)
+            let newNode = Operations._nodeToList hit
+            let (before', hit' :: after') = Operations<'V, 'T>._splitList newNode predicate newValue
+            let prefixTree = Operations<'V, 'T>._digit prefixList before before'
+            let suffixTree = Operations<'V, 'T>._digit after' after suffixList
+            prefixTree, hit', suffixTree
           else
             // split point is in suffix.
             let newValue = monoid.mappend starting (fmeasure content)
