@@ -7,7 +7,7 @@ open Monoid
 // trivially prove that all such matches are exhaustive.
 #nowarn "25"
 
-type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>>() =
+type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V: (new: unit -> 'V)>() =
 
   // worst case: O(lg n). amortized time: O(1)
   static member prepend (this: FingerTree<'V, 'T>) (a: 'T): FingerTree<'V, 'T> =

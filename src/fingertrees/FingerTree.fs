@@ -4,6 +4,10 @@ open Monoid
 
 module FingerTree =
 
+  type Singleton<'T when 'T: (new: unit -> 'T)> private () =
+    static let instance = new 'T()
+    static member Instance = instance
+
   type IMeasured<'V, 'T when 'V :> IMonoid<'V>> =
     abstract member fmeasure: 'V
 
@@ -40,27 +44,28 @@ module FingerTree =
           | Three(x, y, z) -> mconcat [x; y; z]
           | Four(x, y, z, w) -> mconcat [x; y; z; w]
 
-  type Finger<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> = {
+  type Finger<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V: (new: unit -> 'V)> = {
     annotation: 'V;
     prefix: Affix<'V, 'T>;
     content: FingerTree<'V, Node<'V, 'T>>;
     suffix: Affix<'V, 'T>;
   }
 
-  and FingerTree<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> =
+  and FingerTree<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V: (new: unit -> 'V)> =
     | Empty
     | Single of 'T
     | Digit of Finger<'V, 'T>
     interface IMeasured<'V, 'T> with
       member this.fmeasure: 'V =
+        let monoid = Singleton<'V>.Instance
         match this with
-        | Empty -> (fmeasure this).mempty
+        | Empty -> monoid.mempty
         | Single(x) -> fmeasure x
         | Digit(d) -> d.annotation
 
-  type View<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> =
+  type View<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V: (new: unit -> 'V)> =
     | EmptyTree
     | View of 'T * FingerTree<'V, 'T>
 
-  type Split<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T>> =
+  type Split<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V: (new: unit -> 'V)> =
     FingerTree<'V, 'T> * 'T * FingerTree<'V, 'T>
