@@ -6,11 +6,20 @@ open FingerTree
 
 module Library =
 
-  type Size =
-    | Size of int
+  // way too complicated. TODO: simplify.
+  [<StructuredFormatDisplay("{Value}")>]
+  type Size(x: int) =
+    let data = x
+    new() = Size(0)
+    member this.Value = data
     interface IMonoid<Size> with
       member this.mempty = Size(0)
-      member this.mappend (Size(x)) (Size(y)) = Size(x + y)
+      member this.mappend x y = Size(x.Value + y.Value)
+    interface IComparable with
+      member this.CompareTo obj =
+        match obj with
+        | :? Size as other -> this.Value.CompareTo(other.Value)
+        | _ -> failwith "invalid comparison."
 
   type Value<'T> =
     | Value of 'T
@@ -79,18 +88,18 @@ module Library =
     // printfn "comparison tree: %A" intTreeDoubled
     printfn "testing monadic tree: %A" testTree
     printfn "testing string tree: %A" sft
-    // let secondary =
-    //   match Operations.popr sft with
-    //     | View(_, result) ->
-    //       match Operations.popr result with
-    //         | View(_, result) ->
-    //         match Operations.popr result with
-    //           | View(_, result) ->
-    //             match Operations.popr result with
-    //               | View(_, result) ->
-    //               match Operations.popr result with
-    //                 | View(_, result) -> result
-    // printfn "secondary: %A" secondary
+    let secondary =
+      match Operations.popr sft with
+        | View(_, result) ->
+          match Operations.popr result with
+            | View(_, result) ->
+            match Operations.popr result with
+              | View(_, result) ->
+                match Operations.popr result with
+                  | View(_, result) ->
+                  match Operations.popr result with
+                    | View(_, result) -> result
+    printfn "secondary: %A" secondary
 
     // let i = index sft 0
     // printfn "index 0: %A" i

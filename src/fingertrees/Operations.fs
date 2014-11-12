@@ -141,7 +141,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             | Three(x, y, z) -> x, Two(y, z)
             | Four(x, y, z, w) -> x, Three(y, z, w) in
             let monoid = fmeasure suffix
-            let newAnnotation = monoid.mappend monoid (monoid.mappend (fmeasure content) (fmeasure l))
+            let newAnnotation = monoid.mappend monoid (monoid.mappend (fmeasure content) (fmeasure newPrefix))
             View(l,
                  Digit { annotation = newAnnotation;
                          prefix = newPrefix;
@@ -182,7 +182,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             | Three(x, y, z) -> z, Two(x, y)
             | Four(x, y, z, w) -> w, Three(x, y, z) in
             let monoid = fmeasure prefix
-            let newAnnotation = monoid.mappend monoid (monoid.mappend annotation (fmeasure newSuffix))
+            let newAnnotation = monoid.mappend monoid (monoid.mappend (fmeasure content) (fmeasure newSuffix))
             View(l,
                  Digit { annotation = newAnnotation;
                          prefix = prefix;
