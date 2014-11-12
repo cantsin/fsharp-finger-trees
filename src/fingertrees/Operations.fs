@@ -252,21 +252,30 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             | Two(x, y) -> [x; y]
             | Three(x, y, z) -> [x; y; z]
             | Four(x, y, z, w) -> [x; y; z; w]
-        let monoid = fmeasure left
         let mergeAll = List.concat [listify leftDigit.suffix;
                                     middle;
                                     listify rightDigit.prefix]
-        let annotation = monoid.mappend leftDigit.annotation rightDigit.annotation
         let rec listToNode l =
           match l with
-            | [x; y] -> [Branch2(annotation, x, y)]
-            | [x; y; z] -> [Branch3(annotation, x, y, z)]
-            | x :: (y :: xs) -> [Branch2(annotation, x, y)] @ listToNode xs
+            | [x; y] -> [Branch2(mconcat [x; y], x, y)]
+            | [x; y; z] -> [Branch3(mconcat [x; y; z], x, y, z)]
+            | x :: (y :: xs) -> [Branch2(mconcat [x; y], x, y)] @ listToNode xs
         let middle' = listToNode mergeAll
         let content = Operations._concat leftDigit.content middle' rightDigit.content
         let newPrefix = leftDigit.prefix
         let newSuffix = rightDigit.suffix
-        let newAnnotation = monoid.mappend (fmeasure newPrefix) (fmeasure newSuffix)
+        // annotations.
+        let monoid = fmeasure left
+        // TODO: reuse currently existing annotations
+        //let digitAnnotation = monoid.mappend leftDigit.annotation rightDigit.annotation
+        // let digitAnnotation = mconcat [left; right]
+        // let contentAnnotation =
+        //   if List.isEmpty middle then
+        //     digitAnnotation
+        //   else
+        //     monoid.mappend digitAnnotation (mconcat middle)
+        let affixAnnotation = mconcat [newPrefix; newSuffix]
+        let newAnnotation = monoid.mappend (fmeasure content) affixAnnotation
         Digit { annotation = newAnnotation;
                 prefix = newPrefix;
                 content = content;

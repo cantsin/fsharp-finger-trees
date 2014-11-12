@@ -88,18 +88,20 @@ module Library =
     // printfn "comparison tree: %A" intTreeDoubled
     printfn "testing monadic tree: %A" testTree
     printfn "testing string tree: %A" sft
-    let secondary =
-      match Operations.popr sft with
-        | View(_, result) ->
-          match Operations.popr result with
-            | View(_, result) ->
-            match Operations.popr result with
-              | View(_, result) ->
-                match Operations.popr result with
-                  | View(_, result) ->
-                  match Operations.popr result with
-                    | View(_, result) -> result
-    printfn "secondary: %A" secondary
+    // let secondary =
+    //   match Operations.popr sft with
+    //     | View(_, result) ->
+    //       match Operations.popr result with
+    //         | View(_, result) ->
+    //         match Operations.popr result with
+    //           | View(_, result) ->
+    //             match Operations.popr result with
+    //               | View(_, result) ->
+    //               match Operations.popr result with
+    //                 | View(_, result) -> result
+    // printfn "secondary: %A" secondary
+    let sft2 = Operations.concat sft sft
+    printfn "sft2: %A" sft2
 
     // let i = index sft 0
     // printfn "index 0: %A" i
