@@ -412,3 +412,19 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             let newTree = Operations<'V, 'T>._digit prefixList content before
             let newAfter = Operations<'V, 'T>._chunkToTree after
             newTree, hit, newAfter
+
+  static member takeUntil (this: FingerTree<'V, 'T>)
+                          (predicate: 'V -> bool) : FingerTree<'V, 'T> =
+    match Operations<'V, 'T>.first this with
+      | None -> Empty
+      | Some(start) ->
+        let (result, _, _) = Operations<'V, 'T>.split this predicate (fmeasure start)
+        result
+
+  static member dropUntil (this: FingerTree<'V, 'T>)
+                          (predicate: 'V -> bool) : FingerTree<'V, 'T> =
+    match Operations<'V, 'T>.first this with
+      | None -> Empty
+      | Some(start) ->
+        let (_, _, result) = Operations<'V, 'T>.split this predicate (fmeasure start)
+        result

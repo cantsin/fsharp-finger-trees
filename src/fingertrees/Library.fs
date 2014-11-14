@@ -40,9 +40,17 @@ module Library =
       let (_, h, _) = Operations.split tree (fun x -> x > Size idx) (Size 0)
       Some(h)
 
+  // TODO independent of Size?
+  let collapse tree =
+    match Operations.popr tree with
+      | EmptyTree -> List.empty
+      | View(_, ending) ->
+        let lastValue = fmeasure ending
+        List.map (fun x -> index tree x) [for i in 0..lastValue.Value -> i]
+
   // construct a finger tree given a list or string.
   let toFingerTree arr = List.fold (||>) Empty arr
-  // TODO independent of Value?
+  // TODO independent of Size?
   let stringToFingerTree str = [for c in str -> Value c] |> toFingerTree
 
   let sft = stringToFingerTree "thisisnotatree"
@@ -104,7 +112,7 @@ module Library =
     // printfn "sft2: %A" sft2
     let split = Operations.split sft2 (fun x -> x > Size 14) (Size 1)
     printfn "split: %A" split
-
-    // let i = index sft 0
-    // printfn "index 0: %A" i
+    let i = index sft 0
+    printfn "index 0: %A" i
+    printfn "%A" (collapse (Operations.takeUntil sft (fun x -> x > Size 5)))
     0
