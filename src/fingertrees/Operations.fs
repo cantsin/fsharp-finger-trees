@@ -370,14 +370,22 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
     if predicate value then
       failwith "predicate is always true."
     match this with
-      | Single(x)
-          when predicate ((fmeasure x).mappend value (fmeasure x)) ->
-            Empty, x, Empty
+      | Empty ->
+        failwith "split on an empty tree."
+      | Single(x) ->
+        let monoid = fmeasure x
+        let starting = monoid.mappend value monoid
+        if predicate starting then
+          Empty, x, Empty
+        else
+          failwith "split on a single branch failed."
       | Digit { Finger.annotation = annotation;
                 Finger.prefix = prefix;
                 Finger.content = content;
-                Finger.suffix = suffix }
-          when predicate (annotation.mappend value annotation) ->
+                Finger.suffix = suffix } ->
+        if not (predicate (annotation.mappend value annotation)) then
+          failwith "split on a digit failed."
+        else
           let monoid = fmeasure prefix
           let starting = monoid.mappend value monoid
           let prefixList = Operations<'V, 'T>._affixToList prefix
@@ -391,7 +399,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
           elif monoid.mappend starting (fmeasure content) |> predicate then
             // split point is in nested tree.
             let before, hit, after = Operations<'V, Node<'V, 'T>>.split content predicate starting
-            let newValue = monoid.mappend (monoid.mappend starting (fmeasure prefix)) (fmeasure before)
+            let newValue = monoid.mappend (monoid.mappend value (fmeasure prefix)) (fmeasure before)
             let newNode = Operations._nodeToList hit
             let (before', hit' :: after') = Operations<'V, 'T>._splitList newNode predicate newValue
             let prefixTree = Operations<'V, 'T>._digit prefixList before before'
@@ -404,4 +412,3 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             let newTree = Operations<'V, 'T>._digit prefixList content before
             let newAfter = Operations<'V, 'T>._chunkToTree after
             newTree, hit, newAfter
-      | _ -> failwith "split could not be found."

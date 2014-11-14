@@ -101,7 +101,9 @@ module Library =
     //                 | View(_, result) -> result
     // printfn "secondary: %A" secondary
     let sft2 = Operations.concat sft sft
-    printfn "sft2: %A" sft2
+    // printfn "sft2: %A" sft2
+    let split = Operations.split sft2 (fun x -> x > Size 14) (Size 1)
+    printfn "split: %A" split
 
     // let i = index sft 0
     // printfn "index 0: %A" i
