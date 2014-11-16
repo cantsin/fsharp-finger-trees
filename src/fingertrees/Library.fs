@@ -1,61 +1,22 @@
 namespace Fingertrees
 
-open Monoid
-open System
 open FingerTree
+open RandomAccess
 
 module Library =
-
-  // way too complicated. TODO: simplify.
-  [<StructuredFormatDisplay("{Value}")>]
-  type Size(x: int) =
-    let data = x
-    new() = Size(0)
-    member this.Value = data
-    interface IMonoid<Size> with
-      member this.mempty = Size(0)
-      member this.mappend x y = Size(x.Value + y.Value)
-    interface IComparable with
-      member this.CompareTo obj =
-        match obj with
-        | :? Size as other -> this.Value.CompareTo(other.Value)
-        | _ -> failwith "invalid comparison."
-
-  type Value<'T> =
-    | Value of 'T
-    interface IMeasured<Size, Value<'T>> with
-      member this.fmeasure =
-        Size(1)
 
   // shortcut operators for convenience.
   let (<||) = Operations.prepend
   let (||>) = Operations.append
 
-  // TODO independent of Size?
-  let index tree idx =
-    if idx < 0 then
-      // TODO annotation on Finger
-      None
-    else
-      let (_, h, _) = Operations.split tree (fun x -> x > Size idx) (Size 0)
-      Some(h)
-
-  // TODO independent of Size?
-  let collapse tree =
-    match Operations.popr tree with
-      | EmptyTree -> List.empty
-      | View(_, ending) ->
-        let lastValue = fmeasure ending
-        List.map (fun x -> index tree x) [for i in 0..lastValue.Value -> i]
-
   // construct a finger tree given a list or string.
   let toFingerTree arr = List.fold (||>) Empty arr
-  // TODO independent of Size?
-  let stringToFingerTree str = [for c in str -> Value c] |> toFingerTree
 
+  // testing a constructed finger tree.
+  let stringToFingerTree str = [for c in str -> Value c] |> toFingerTree
   let sft = stringToFingerTree "thisisnotatree"
 
-  // test an example tree by hand
+  // testing an example tree by hand
   let prefix1: Affix<Size, Value<char>> =
     Two(Value('t'),Value('h'))
   let prefix2: Affix<Size, Node<Size, Value<char>>> =
@@ -112,7 +73,7 @@ module Library =
     // printfn "sft2: %A" sft2
     let split = Operations.split sft2 (fun x -> x > Size 14) (Size 1)
     printfn "split: %A" split
-    let i = index sft 0
+    let i = nth sft 0
     printfn "index 0: %A" i
     printfn "%A" (collapse (Operations.takeUntil sft (fun x -> x > Size 5)))
     0

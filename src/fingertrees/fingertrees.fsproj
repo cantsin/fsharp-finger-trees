@@ -46,6 +46,7 @@
     <Compile Include="Monoid.fs" />
     <Compile Include="FingerTree.fs" />
     <Compile Include="Operations.fs" />
+    <Compile Include="FingerTreeTypes.fs" />
     <Compile Include="Library.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
