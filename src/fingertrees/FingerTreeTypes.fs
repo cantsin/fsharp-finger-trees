@@ -42,3 +42,31 @@ module RandomAccess =
       | View(_, ending) ->
         let lastValue = fmeasure ending
         List.map (fun x -> nth tree x) [for i in 0..lastValue.Value -> i]
+
+module PriorityQueue =
+
+  type Priority =
+    | NegativeInfinity
+    | Priority of int
+
+  let maxPriority (x: Priority) (y: Priority) =
+    match x, y with
+      | (NegativeInfinity, v) -> v
+      | (v, NegativeInfinity) -> v
+      | (Priority(v1), Priority(v2)) -> Priority(max v1 v2)
+
+  [<StructuredFormatDisplay("{Value}")>]
+  type Prioritized(p: Priority) =
+    let priority = p
+    new() = Prioritized(NegativeInfinity)
+    member this.Value = priority
+    interface IMonoid<Prioritized> with
+      member this.mempty = Prioritized(NegativeInfinity)
+      member this.mappend x y = Prioritized(maxPriority x.Value y.Value)
+
+  type Value<'T> =
+    { Item: 'T
+      PriorityValue: int }
+    interface IMeasured<Prioritized, Value<'T>> with
+      member this.fmeasure =
+        Prioritized(Priority(this.PriorityValue))

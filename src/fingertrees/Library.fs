@@ -14,7 +14,7 @@ module Library =
 
   [<EntryPoint>]
   let main args =
-    // testing a random access finger tree.
+    // testing random access.
     let stringToFingerTree str = [for c in str -> Value c] |> toFingerTree
     let sft = stringToFingerTree "thisisnotatree"
     printfn "testing constructed tree: %A" sft
@@ -24,4 +24,6 @@ module Library =
     let i = nth sft 0
     printfn "index 0: %A" i
     printfn "%A" (collapse (Operations.takeUntil sft (fun x -> x > Size 5)))
+    // testing a priority queue.
+
     0
