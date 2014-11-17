@@ -70,3 +70,11 @@ module PriorityQueue =
     interface IMeasured<Prioritized, Value<'T>> with
       member this.fmeasure =
         Prioritized(Priority(this.PriorityValue))
+
+  let pop pq =
+    let (maxp: Prioritized) = fmeasure pq
+    let nohit = Prioritized(NegativeInfinity)
+    let compare (x: Prioritized) = maxp.Value = x.Value
+    let (left, hit, right) = Operations.split pq compare nohit
+    let npq = Operations.concat left right
+    hit, npq

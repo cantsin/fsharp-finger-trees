@@ -2,6 +2,7 @@ namespace Fingertrees
 
 open FingerTree
 open RandomAccess
+open PriorityQueue
 
 module Library =
 
@@ -15,8 +16,8 @@ module Library =
   [<EntryPoint>]
   let main args =
     // testing random access.
-    let stringToFingerTree str = [for c in str -> Value c] |> toFingerTree
-    let sft = stringToFingerTree "thisisnotatree"
+    let stringToIndex str = [for c in str -> Value c] |> toFingerTree
+    let sft = stringToIndex "thisisnotatree"
     printfn "testing constructed tree: %A" sft
     let sft2 = Operations.concat sft sft
     let split = Operations.split sft2 (fun x -> x > Size 14) (Size 1)
@@ -25,5 +26,18 @@ module Library =
     printfn "index 0: %A" i
     printfn "%A" (collapse (Operations.takeUntil sft (fun x -> x > Size 5)))
     // testing a priority queue.
-
+    let strings = ["a"; "bb"; "ccc"; "dddd"; "eeeee"; "ffffff"]
+    let listToPriority l =
+      let accum acc x = acc ||> { Item = x; PriorityValue = String.length x }
+      List.fold accum Empty l
+    let pft = listToPriority strings
+    printfn "testing constructed tree: %A" pft
+    let (longest, q) = pop pft
+    printfn "%A" longest
+    let (longest, q) = pop q
+    printfn "%A" longest
+    let (longest, q) = pop q
+    printfn "%A" longest
+    let (longest, q) = pop q
+    printfn "%A" longest
     0
