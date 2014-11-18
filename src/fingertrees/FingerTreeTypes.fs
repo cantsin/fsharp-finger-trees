@@ -7,7 +7,6 @@ open FingerTree
 // random access sequence on finger trees
 module RandomAccess =
 
-  // way too complicated. TODO: simplify.
   [<StructuredFormatDisplay("{Value}")>]
   type Size(x: int) =
     let data = x
@@ -16,11 +15,6 @@ module RandomAccess =
     interface IMonoid<Size> with
       member this.mempty = Size(0)
       member this.mappend x y = Size(x.Value + y.Value)
-    interface IComparable with
-      member this.CompareTo obj =
-        match obj with
-        | :? Size as other -> this.Value.CompareTo(other.Value)
-        | _ -> failwith "invalid comparison."
 
   type Value<'T> =
     | Value of 'T
@@ -33,7 +27,7 @@ module RandomAccess =
     if index < 0 || index >= total.Value then
       None
     else
-      let (_, h, _) = Operations.split tree (fun x -> x > Size index) (Size 0)
+      let (_, h, _) = Operations.split tree (fun x -> x.Value > index) (Size(0))
       Some(h)
 
   let collapse tree =
@@ -43,13 +37,14 @@ module RandomAccess =
         let lastValue = fmeasure ending
         List.map (fun x -> nth tree x) [for i in 0..lastValue.Value -> i]
 
+// priority queue on finger trees
 module PriorityQueue =
 
   type Priority =
     | NegativeInfinity
     | Priority of int
 
-  let maxPriority (x: Priority) (y: Priority) =
+  let maxPriority x y =
     match x, y with
       | (NegativeInfinity, v) -> v
       | (v, NegativeInfinity) -> v
@@ -77,4 +72,4 @@ module PriorityQueue =
     let compare (x: Prioritized) = maxp.Value = x.Value
     let (left, hit, right) = Operations.split pq compare nohit
     let npq = Operations.concat left right
-    hit, npq
+    hit.Item, npq

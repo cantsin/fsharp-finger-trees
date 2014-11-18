@@ -20,13 +20,13 @@ module Library =
     let sft = stringToIndex "thisisnotatree"
     printfn "testing constructed tree: %A" sft
     let sft2 = Operations.concat sft sft
-    let split = Operations.split sft2 (fun x -> x > Size 14) (Size 1)
+    let split = Operations.split sft2 (fun x -> x.Value > 14) (Size(1))
     printfn "split: %A" split
     let i = nth sft 0
     printfn "index 0: %A" i
-    printfn "%A" (collapse (Operations.takeUntil sft (fun x -> x > Size 5)))
+    printfn "%A" (collapse (Operations.takeUntil sft (fun x -> x.Value > 5)))
     // testing a priority queue.
-    let strings = ["a"; "bb"; "ccc"; "dddd"; "eeeee"; "ffffff"]
+    let strings = ["bb"; "ffffff"; "a"; "ccc"; "eeeee"; "dddd"]
     let listToPriority l =
       let accum acc x = acc ||> { Item = x; PriorityValue = String.length x }
       List.fold accum Empty l
