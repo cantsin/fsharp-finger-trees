@@ -73,3 +73,30 @@ module PriorityQueue =
     let (left, hit, right) = Operations.split pq compare nohit
     let npq = Operations.concat left right
     hit.Item, npq
+
+// ordered sequence on finger trees (specialization of priority queue)
+module OrderedSequence =
+
+  type OrderedKey<'T> =
+    | NoKey
+    | Key of 'T
+
+  let second x y =
+    match x, y with
+      | (v, NoKey) -> v
+      | (_, v) -> v
+
+  [<StructuredFormatDisplay("{Value}")>]
+  type Ordered<'T>(k) =
+    let key = k: OrderedKey<'T>
+    new() = Ordered(NoKey)
+    member this.Value = key
+    interface IMonoid<Ordered<'T>> with
+      member this.mempty = Ordered(NoKey)
+      member this.mappend x y = Ordered(second x.Value y.Value)
+
+  type Last<'T> =
+    { Last: 'T }
+    interface IMeasured<Ordered<'T>, Last<'T>> with
+      member this.fmeasure =
+        Ordered(Key(this.Last))
