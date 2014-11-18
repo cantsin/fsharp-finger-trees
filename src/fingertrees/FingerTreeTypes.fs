@@ -77,7 +77,7 @@ module PriorityQueue =
 // ordered sequence on finger trees (specialization of priority queue)
 module OrderedSequence =
 
-  type OrderedKey<'T> =
+  type OrderedKey<'T when 'T: comparison> =
     | NoKey
     | Key of 'T
 
@@ -87,7 +87,7 @@ module OrderedSequence =
       | (_, v) -> v
 
   [<StructuredFormatDisplay("{Value}")>]
-  type Ordered<'T>(k) =
+  type Ordered<'T when 'T: comparison>(k) =
     let key = k: OrderedKey<'T>
     new() = Ordered(NoKey)
     member this.Value = key
@@ -95,8 +95,14 @@ module OrderedSequence =
       member this.mempty = Ordered(NoKey)
       member this.mappend x y = Ordered(second x.Value y.Value)
 
-  type Last<'T> =
+  type Last<'T when 'T: comparison> =
     { Last: 'T }
     interface IMeasured<Ordered<'T>, Last<'T>> with
       member this.fmeasure =
         Ordered(Key(this.Last))
+
+  let partition seq (a: Ordered<'T>) =
+    let nohit = Ordered(NoKey)
+    let compare (x: Ordered<'T>) = x.Value >= a.Value
+    let (left, h, right) = Operations.split seq compare nohit
+    left
