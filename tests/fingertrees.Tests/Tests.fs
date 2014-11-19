@@ -9,8 +9,9 @@ open Fingertrees
 open Monoid
 open FingerTree
 open RandomAccess
+open PriorityQueue
 
-module public TestSumMonoid =
+module public FingerTreeTests =
 
   type SumMonoid() =
 //    interface IMonoid<int> with
@@ -20,6 +21,9 @@ module public TestSumMonoid =
 
   [<TestFixtureSetUp>]
   let monoid = SumMonoid()
+  // shortcut operators for convenience.
+  let (<||) = Operations.prepend
+  let (||>) = Operations.append
 
   [<Test>]
   let ``mempty <> x = x`` () =
@@ -68,4 +72,36 @@ module public TestSumMonoid =
     let testTree: FingerTree<Size, Value<char>> =
       Digit(content2);
     let total: Size = fmeasure testTree
-    assert(total.Value = 14)
+    Assert.That(total.Value, Is.EqualTo(14))
+
+  [<Test>]
+  let ``testing random access`` () =
+    let toFingerTree arr = List.fold (||>) Empty arr
+    let stringToIndex str = [for c in str -> Value c] |> toFingerTree
+    let sft = stringToIndex "thisisnotatree"
+    let sft2 = Operations.concat sft sft
+    let _, split, _ = Operations.split sft2 (fun x -> x.Value > 14) (Size(1))
+    Assert.That(split, Is.EqualTo(Value('e')))
+    let i = nth sft 0
+    Assert.That(i, Is.EqualTo(Some(Value('t'))))
+    let result = collapse (Operations.takeUntil sft (fun x -> x.Value > 5))
+    Assert.That(result.[0], Is.EqualTo(Some(Value('t'))))
+    Assert.That(result.[1], Is.EqualTo(Some(Value('h'))))
+    Assert.That(result.[2], Is.EqualTo(Some(Value('i'))))
+    Assert.That(result.[3], Is.EqualTo(Some(Value('s'))))
+
+  [<Test>]
+  let ``testing a priority queue`` () =
+    let strings = ["bb"; "ffffff"; "a"; "ccc"; "eeeee"; "dddd"]
+    let listToPriority l =
+      let accum acc x = acc ||> { Item = x; PriorityValue = String.length x }
+      List.fold accum Empty l
+    let pft = listToPriority strings
+    let (longest, q) = pop pft
+    Assert.That(longest, Is.EqualTo("ffffff"))
+    let (longest, q) = pop q
+    Assert.That(longest, Is.EqualTo("eeeee"))
+    let (longest, q) = pop q
+    Assert.That(longest, Is.EqualTo("dddd"))
+    let (longest, q) = pop q
+    Assert.That(longest, Is.EqualTo("ccc"))

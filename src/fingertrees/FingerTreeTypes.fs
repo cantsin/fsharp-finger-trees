@@ -59,10 +59,10 @@ module PriorityQueue =
       member this.mempty = Prioritized(NegativeInfinity)
       member this.mappend x y = Prioritized(maxPriority x.Value y.Value)
 
-  type Value<'T> =
+  type PValue<'T> =
     { Item: 'T
       PriorityValue: int }
-    interface IMeasured<Prioritized, Value<'T>> with
+    interface IMeasured<Prioritized, PValue<'T>> with
       member this.fmeasure =
         Prioritized(Priority(this.PriorityValue))
 
