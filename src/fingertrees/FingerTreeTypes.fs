@@ -121,8 +121,7 @@ module OrderedSequence =
     let (left', right') = Operations.split right greaterThan
     Operations.concat left right'
 
-  let rec merge (seqA: FingerTree<Ordered<'T>, Last<'T>>)
-                (seqB: FingerTree<Ordered<'T>, Last<'T>>) =
+  let rec merge seqA seqB =
     match Operations.popl seqB with
       | EmptyTree ->
         seqA
@@ -133,3 +132,32 @@ module OrderedSequence =
         let merged = merge rest right
         let result = Operations.prepend merged { Last = item.Last }
         Operations.concat left result
+
+// interval trees on finger trees (uses priority queue and ordered sequence)
+module IntervalTrees =
+
+  open PriorityQueue
+  open OrderedSequence
+
+  type Singleton<'T when 'T: (new: unit -> 'T)> private () =
+
+    static let instance = new 'T()
+    static member Instance = instance
+
+  type ProductMonoid<'A, 'B when 'A :> IMonoid<'A> and 'B :> IMonoid<'B> and 'A: (new: unit -> 'A) and 'B: (new: unit -> 'B)> =
+    interface IMonoid<('A * 'B)> with
+      member this.mempty =
+        let monoidA = Singleton<'A>.Instance
+        let monoidB = Singleton<'B>.Instance
+        monoidA.mempty, monoidB.mempty
+      member this.mappend x y =
+        let (a, b) = x
+        let (a', b') = y
+        a.mappend a a', b.mappend b b'
+
+  type Interval =
+    { low: float
+      high: float }
+    interface IMeasured<ProductMonoid<(Ordered<float> * Prioritized)>, Interval> with
+      member this.fmeasure =
+        Ordered(Key(this.low)), Prioritized(Priority(this.high))
