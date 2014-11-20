@@ -25,7 +25,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
                 Finger.content = content;
                 Finger.suffix = suffix } ->
         let monoid = fmeasure a
-        let newAnnotation = monoid.mappend annotation monoid
+        let newAnnotation = monoid.mappend monoid annotation
         let branchAnnotation = mconcat [p1; p2; p3]
         Digit { annotation = newAnnotation;
                 prefix = Two(a, p1);
@@ -36,7 +36,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
                 Finger.content = content;
                 Finger.suffix = suffix } ->
         let monoid = fmeasure a
-        let newAnnotation = monoid.mappend annotation monoid
+        let newAnnotation = monoid.mappend monoid annotation
         let newPrefix =
           match prefix with
             | One(x) -> Two(a, x)
@@ -424,7 +424,8 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             let value = fmeasure start
             let (left, hit, right) = Operations<'V, 'T>.splitTree this predicate value
             left, Operations.prepend right hit
-      | _ -> this, Empty
+      | tree ->
+        this, Empty
 
   static member takeUntil (this: FingerTree<'V, 'T>)
                           (predicate: 'V -> bool) : FingerTree<'V, 'T> =

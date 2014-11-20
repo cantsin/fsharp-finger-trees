@@ -112,3 +112,11 @@ module OrderedSequence =
     let value = Ordered(Key(a)).Value
     let compare (x: Ordered<'T>) = x.Value >= value
     Operations.split seq compare
+
+  let delete seq a =
+    let value = Ordered(Key(a)).Value
+    let greaterThanOrEquals (x: Ordered<'T>) = x.Value >= value
+    let greaterThan (x: Ordered<'T>) = x.Value > value
+    let (left, right) = Operations.split seq greaterThanOrEquals
+    let (left', right') = Operations.split right greaterThan
+    Operations.concat left right'

@@ -15,5 +15,7 @@ module Library =
     let oft = listToSequence [1..20]
     printfn "testing constructed ordered sequence: %A" oft
     let result = partition oft 16
-    printfn "test: %A" result
+    printfn "partitioned: %A" result
+    let deleted = delete oft 5
+    printfn "deleted: %A" deleted
     0
