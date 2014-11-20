@@ -1,7 +1,7 @@
 namespace Fingertrees
 
 open FingerTree
-open OrderedSequence
+open IntervalTrees
 
 module Library =
 
@@ -11,15 +11,9 @@ module Library =
 
   [<EntryPoint>]
   let main args =
-    let listToSequence l = List.fold insert Empty l
-    let oft = listToSequence [1..20]
-    printfn "testing constructed ordered sequence: %A" oft
-    let result = partition oft 16
-    printfn "partitioned: %A" result
-    let deleted = delete oft 5
-    printfn "deleted: %A" deleted
-    let (seqA, _) = partition oft 5
-    let (_, seqB) = partition oft 15
-    let merged = merge seqA seqB
-    printfn "merged: %A" merged
+    let listToIntervalTree l =
+      let accum acc (x, y) = acc ||> { low = x; high = y }
+      List.fold accum Empty l
+    let it = listToIntervalTree [(1,2); (2,3); (3,4)]
+    printfn "%A" it
     0

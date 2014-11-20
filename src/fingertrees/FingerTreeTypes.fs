@@ -139,25 +139,24 @@ module IntervalTrees =
   open PriorityQueue
   open OrderedSequence
 
-  type Singleton<'T when 'T: (new: unit -> 'T)> private () =
-
-    static let instance = new 'T()
-    static member Instance = instance
-
-  type ProductMonoid<'A, 'B when 'A :> IMonoid<'A> and 'B :> IMonoid<'B> and 'A: (new: unit -> 'A) and 'B: (new: unit -> 'B)> =
-    interface IMonoid<('A * 'B)> with
+  // cannot be generalized?: tuples as generic parameters are sealed.
+  [<StructuredFormatDisplay("{Value}")>]
+  type ProductMonoid(p) =
+    let product = p
+    new() = ProductMonoid((new Ordered<int>(), new Prioritized()))
+    member this.Value = product
+    interface IMonoid<ProductMonoid> with
       member this.mempty =
-        let monoidA = Singleton<'A>.Instance
-        let monoidB = Singleton<'B>.Instance
-        monoidA.mempty, monoidB.mempty
+        ProductMonoid((new Ordered<int>(), new Prioritized()))
       member this.mappend x y =
-        let (a, b) = x
-        let (a', b') = y
-        a.mappend a a', b.mappend b b'
+        let (a, b) = x.Value
+        let (a', b') = y.Value
+        ProductMonoid(((a :> IMonoid<Ordered<int>>).mappend a a',
+                       (b :> IMonoid<Prioritized>).mappend b b'))
 
   type Interval =
-    { low: float
-      high: float }
-    interface IMeasured<ProductMonoid<(Ordered<float> * Prioritized)>, Interval> with
+    { low: int
+      high: int }
+    interface IMeasured<ProductMonoid, Interval> with
       member this.fmeasure =
-        Ordered(Key(this.low)), Prioritized(Priority(this.high))
+        ProductMonoid((Ordered(Key(this.low)), Prioritized(Priority(this.high))))
