@@ -18,4 +18,8 @@ module Library =
     printfn "partitioned: %A" result
     let deleted = delete oft 5
     printfn "deleted: %A" deleted
+    let (seqA, _) = partition oft 5
+    let (_, seqB) = partition oft 15
+    let merged = merge seqA seqB
+    printfn "merged: %A" merged
     0

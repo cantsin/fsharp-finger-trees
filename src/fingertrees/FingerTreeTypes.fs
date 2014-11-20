@@ -120,3 +120,16 @@ module OrderedSequence =
     let (left, right) = Operations.split seq greaterThanOrEquals
     let (left', right') = Operations.split right greaterThan
     Operations.concat left right'
+
+  let rec merge (seqA: FingerTree<Ordered<'T>, Last<'T>>)
+                (seqB: FingerTree<Ordered<'T>, Last<'T>>) =
+    match Operations.popl seqB with
+      | EmptyTree ->
+        seqA
+      | View(item, rest) ->
+        let value = Ordered(Key(item.Last)).Value
+        let greaterThan (x: Ordered<'T>) = x.Value > value
+        let (left, right) = Operations.split seqA greaterThan
+        let merged = merge rest right
+        let result = Operations.prepend merged { Last = item.Last }
+        Operations.concat left result
