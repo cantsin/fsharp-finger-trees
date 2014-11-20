@@ -10,11 +10,11 @@ open Monoid
 open FingerTree
 open RandomAccess
 open PriorityQueue
+open OrderedSequence
 
 module public FingerTreeTests =
 
   type SumMonoid() =
-//    interface IMonoid<int> with
     member this.mempty = 0
     member this.mappend x y = x + y
     member this.mconcat arr = Seq.fold this.mappend this.mempty arr
@@ -80,7 +80,7 @@ module public FingerTreeTests =
     let stringToIndex str = [for c in str -> Value c] |> toFingerTree
     let sft = stringToIndex "thisisnotatree"
     let sft2 = Operations.concat sft sft
-    let _, split, _ = Operations.split sft2 (fun x -> x.Value > 14) (Size(1))
+    let _, split, _ = Operations.splitTree sft2 (fun x -> x.Value > 14) (Size(1))
     Assert.That(split, Is.EqualTo(Value('e')))
     let i = nth sft 0
     Assert.That(i, Is.EqualTo(Some(Value('t'))))
@@ -105,3 +105,17 @@ module public FingerTreeTests =
     Assert.That(longest, Is.EqualTo("dddd"))
     let (longest, q) = pop q
     Assert.That(longest, Is.EqualTo("ccc"))
+
+  [<Test>]
+  let ``testing an ordered sequence`` () =
+    let listToSequence l = List.fold insert Empty l
+    let oft = listToSequence [1..20]
+    let left, right = partition oft 16
+    Assert.That((fmeasure left).Value, Is.EqualTo(Key(15)))
+    Assert.That((fmeasure right).Value, Is.EqualTo(Key(20)))
+    let deleted = delete oft 5
+    Assert.That((fmeasure deleted).Value, Is.EqualTo(Key(20)))
+    let (seqA, _) = partition oft 5
+    let (_, seqB) = partition oft 15
+    let merged = merge seqA seqB
+    Assert.That((fmeasure merged).Value, Is.EqualTo(Key(20)))

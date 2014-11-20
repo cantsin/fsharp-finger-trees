@@ -4,10 +4,6 @@ open Monoid
 
 module FingerTree =
 
-  type Singleton<'T when 'T: (new: unit -> 'T)> private () =
-    static let instance = new 'T()
-    static member Instance = instance
-
   type IMeasured<'V, 'T when 'V :> IMonoid<'V>> =
     abstract member fmeasure: 'V
 
