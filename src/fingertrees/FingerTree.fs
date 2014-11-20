@@ -68,4 +68,4 @@ module FingerTree =
     | View of 'T * FingerTree<'V, 'T>
 
   type Split<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V: (new: unit -> 'V)> =
-    FingerTree<'V, 'T> * 'T * FingerTree<'V, 'T>
+    FingerTree<'V, 'T> * FingerTree<'V, 'T>

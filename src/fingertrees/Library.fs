@@ -11,13 +11,9 @@ module Library =
 
   [<EntryPoint>]
   let main args =
-    // testing an ordered sequence.
-    let listToSequence l =
-      let accum acc x = acc ||> { Last = x }
-      List.fold accum Empty l
+    let listToSequence l = List.fold insert Empty l
     let oft = listToSequence [1..20]
     printfn "testing constructed ordered sequence: %A" oft
-    let v = Ordered(Key(16))
-    let result = partition oft v
+    let result = partition oft 16
     printfn "test: %A" result
     0

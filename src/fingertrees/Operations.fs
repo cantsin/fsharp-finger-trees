@@ -292,7 +292,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
     match list with
       | [] -> failwith "list split could not be found."
       | x :: xs ->
-        let start = value.mappend (fmeasure x) value
+        let start = value.mappend value (fmeasure x)
         if predicate start then
           ([], x::xs)
         else
@@ -364,9 +364,9 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
 
   // predicate must be monotonic.
   // value is the annotation on the left-most subsequence
-  static member split (this: FingerTree<'V, 'T>)
-                      (predicate: 'V -> bool)
-                      (value: 'V): Split<'V, 'T> =
+  static member splitTree (this: FingerTree<'V, 'T>)
+                          (predicate: 'V -> bool)
+                          (value: 'V): FingerTree<'V, 'T> * 'T * FingerTree<'V, 'T> =
     if predicate value then
       failwith "predicate is always true."
     match this with
@@ -398,7 +398,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             newBefore, hit, newTree
           elif monoid.mappend starting (fmeasure content) |> predicate then
             // split point is in nested tree.
-            let before, hit, after = Operations<'V, Node<'V, 'T>>.split content predicate starting
+            let before, hit, after = Operations<'V, Node<'V, 'T>>.splitTree content predicate starting
             let newValue = monoid.mappend (monoid.mappend value (fmeasure prefix)) (fmeasure before)
             let newNode = Operations._nodeToList hit
             let (before', hit' :: after') = Operations<'V, 'T>._splitList newNode predicate newValue
@@ -413,18 +413,25 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             let newAfter = Operations<'V, 'T>._chunkToTree after
             newTree, hit, newAfter
 
+  static member split (this: FingerTree<'V, 'T>)
+                      (predicate: 'V -> bool): Split<'V, 'T> =
+    match this with
+      | Empty ->
+        Empty, Empty
+      | tree when fmeasure tree |> predicate ->
+        match Operations<'V, 'T>.first this with
+          | Some(start) ->
+            let value = fmeasure start
+            let (left, hit, right) = Operations<'V, 'T>.splitTree this predicate value
+            left, Operations.prepend right hit
+      | _ -> this, Empty
+
   static member takeUntil (this: FingerTree<'V, 'T>)
                           (predicate: 'V -> bool) : FingerTree<'V, 'T> =
-    match Operations<'V, 'T>.first this with
-      | None -> Empty
-      | Some(start) ->
-        let (result, _, _) = Operations<'V, 'T>.split this predicate (fmeasure start)
-        result
+    let (result, _) = Operations<'V, 'T>.split this predicate
+    result
 
   static member dropUntil (this: FingerTree<'V, 'T>)
                           (predicate: 'V -> bool) : FingerTree<'V, 'T> =
-    match Operations<'V, 'T>.first this with
-      | None -> Empty
-      | Some(start) ->
-        let (_, _, result) = Operations<'V, 'T>.split this predicate (fmeasure start)
-        result
+    let (_, result) = Operations<'V, 'T>.split this predicate
+    result

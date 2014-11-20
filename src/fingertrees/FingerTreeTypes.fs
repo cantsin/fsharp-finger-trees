@@ -27,7 +27,7 @@ module RandomAccess =
     if index < 0 || index >= total.Value then
       None
     else
-      let (_, h, _) = Operations.split tree (fun x -> x.Value > index) (Size(0))
+      let (_, h, _) = Operations.splitTree tree (fun x -> x.Value > index) (Size(0))
       Some(h)
 
   let collapse tree =
@@ -70,7 +70,7 @@ module PriorityQueue =
     let (maxp: Prioritized) = fmeasure pq
     let nohit = Prioritized(NegativeInfinity)
     let compare (x: Prioritized) = maxp.Value = x.Value
-    let (left, hit, right) = Operations.split pq compare nohit
+    let (left, hit, right) = Operations.splitTree pq compare nohit
     let npq = Operations.concat left right
     hit.Item, npq
 
@@ -101,8 +101,14 @@ module OrderedSequence =
       member this.fmeasure =
         Ordered(Key(this.Last))
 
-  let partition seq (a: Ordered<'T>) =
-    let nohit = Ordered(NoKey)
-    let compare (x: Ordered<'T>) = x.Value >= a.Value
-    let (left, h, right) = Operations.split seq compare nohit
-    left
+  let insert seq a =
+    let value = Ordered(Key(a)).Value
+    let compare (x: Ordered<'T>) = x.Value >= value
+    let (left, right) = Operations.split seq compare
+    let right' = Operations.prepend right { Last = a }
+    Operations.concat left right'
+
+  let partition seq a =
+    let value = Ordered(Key(a)).Value
+    let compare (x: Ordered<'T>) = x.Value >= value
+    Operations.split seq compare
