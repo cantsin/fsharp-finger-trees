@@ -11,6 +11,7 @@ open FingerTree
 open RandomAccess
 open PriorityQueue
 open OrderedSequence
+open IntervalTrees
 
 module public FingerTreeTests =
 
@@ -119,3 +120,18 @@ module public FingerTreeTests =
     let (_, seqB) = partition oft 15
     let merged = merge seqA seqB
     Assert.That((fmeasure merged).Value, Is.EqualTo(Key(20)))
+
+  [<Test>]
+  let ``testing an interval tree`` () =
+    let listToIntervalTree l =
+      let accum acc (x, y) = acc ||> { low = x; high = y }
+      List.fold accum Empty l
+    let it = listToIntervalTree [(1,2); (2,3); (3,4)]
+    let miss = intervalSearch it { low = 10; high = 20 }
+    Assert.That(Option.isNone miss, Is.EqualTo(true))
+    let hit = intervalSearch it { low = 1; high = 2 }
+    Assert.That(hit, Is.EqualTo(Some({low=1; high=2})))
+    let miss' = intervalMatch it { low = -30; high = -10 }
+    Assert.That(miss', Is.EqualTo([]))
+    let hit' = intervalMatch it { low = 3; high = 4 }
+    Assert.That(hit', Is.EqualTo([{low=2; high=3}; {low=3; high=4}]))
