@@ -145,6 +145,14 @@ module IntervalTrees =
     let product = p
     new() = ProductMonoid((new Ordered<int>(), new Prioritized()))
     member this.Value = product
+    // access functions.
+    member this.GetPriority() =
+      let (_, b) = this.Value
+      b.Value
+    member this.GetKey() =
+      let (a, _) = this.Value
+      a.Value
+    // monoid definition.
     interface IMonoid<ProductMonoid> with
       member this.mempty =
         ProductMonoid((new Ordered<int>(), new Prioritized()))
@@ -160,3 +168,22 @@ module IntervalTrees =
     interface IMeasured<ProductMonoid, Interval> with
       member this.fmeasure =
         ProductMonoid((Ordered(Key(this.low)), Prioritized(Priority(this.high))))
+
+  // predicates.
+  let atleast (product: ProductMonoid) (a: int): bool =
+    Priority(a) <= product.GetPriority()
+
+  let greater (product: ProductMonoid) (a: int): bool =
+    product.GetKey() > Key(a)
+
+  let intervalSearch tree (i: Interval) =
+    let m: ProductMonoid = fmeasure tree
+    let empty = (m :> IMonoid<ProductMonoid>).mempty
+    let splitOn product = atleast product i.low
+    let (_, x, _) = Operations.splitTree tree splitOn empty
+    let isHigher = atleast m i.low
+    let isLesser = x.low <= i.high
+    if isHigher && isLesser then
+      Some(x)
+    else
+      None
