@@ -178,12 +178,28 @@ module IntervalTrees =
 
   let intervalSearch tree (i: Interval) =
     let m: ProductMonoid = fmeasure tree
-    let empty = (m :> IMonoid<ProductMonoid>).mempty
-    let splitOn product = atleast product i.low
-    let (_, x, _) = Operations.splitTree tree splitOn empty
     let isHigher = atleast m i.low
-    let isLesser = x.low <= i.high
-    if isHigher && isLesser then
-      Some(x)
-    else
+    if not isHigher then
       None
+    else
+      let empty = (m :> IMonoid<ProductMonoid>).mempty
+      let splitOn product = atleast product i.low
+      let (_, x, _) = Operations.splitTree tree splitOn empty
+      let isLower = x.low <= i.high
+      if isLower then
+        Some(x)
+      else
+        None
+
+  let intervalMatch tree (i: Interval) =
+    let m: ProductMonoid = fmeasure tree
+    let isLower product = greater product i.high
+    let lower = Operations.takeUntil tree isLower
+    let rec matches xs =
+      let isHigher product = atleast product i.low
+      let higher = Operations.dropUntil xs isHigher
+      let result = Operations.popl higher
+      match result with
+        | EmptyTree -> []
+        | View(elem, rest) -> elem :: matches rest
+    matches lower

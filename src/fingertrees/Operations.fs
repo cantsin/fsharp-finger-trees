@@ -367,8 +367,6 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
   static member splitTree (this: FingerTree<'V, 'T>)
                           (predicate: 'V -> bool)
                           (value: 'V): FingerTree<'V, 'T> * 'T * FingerTree<'V, 'T> =
-    if predicate value then
-      failwith "predicate is always true."
     match this with
       | Empty ->
         failwith "split on an empty tree."
