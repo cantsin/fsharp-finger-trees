@@ -22,6 +22,8 @@ module RandomAccess =
       member this.fmeasure =
         Size(1)
 
+  let listToRandomAccess arr = List.fold (Operations.append) Empty arr
+
   let nth tree index =
     let total: Size = fmeasure tree
     if index < 0 || index >= total.Value then
@@ -66,6 +68,10 @@ module PriorityQueue =
       member this.fmeasure =
         Prioritized(Priority(this.PriorityValue))
 
+  let listToPriority l =
+    let accum acc x = Operations.append acc { Item = x; PriorityValue = String.length x }
+    List.fold accum Empty l
+
   let pop pq =
     let (maxp: Prioritized) = fmeasure pq
     let nohit = Prioritized(NegativeInfinity)
@@ -107,6 +113,8 @@ module OrderedSequence =
     let (left, right) = Operations.split seq compare
     let right' = Operations.prepend right { Last = a }
     Operations.concat left right'
+
+  let listToSequence l = List.fold insert Empty l
 
   let partition seq a =
     let value = Ordered(Key(a)).Value
@@ -168,6 +176,10 @@ module IntervalTrees =
     interface IMeasured<ProductMonoid, Interval> with
       member this.fmeasure =
         ProductMonoid((Ordered(Key(this.low)), Prioritized(Priority(this.high))))
+
+  let listToIntervalTree l =
+    let accum acc (x, y) = Operations.append acc { low = x; high = y }
+    List.fold accum Empty l
 
   // predicates.
   let atleast (product: ProductMonoid) (a: int): bool =

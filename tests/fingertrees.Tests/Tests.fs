@@ -22,9 +22,6 @@ module public FingerTreeTests =
 
   [<TestFixtureSetUp>]
   let monoid = SumMonoid()
-  // shortcut operators for convenience.
-  let (<||) = Operations.prepend
-  let (||>) = Operations.append
 
   [<Test>]
   let ``mempty <> x = x`` () =
@@ -77,8 +74,7 @@ module public FingerTreeTests =
 
   [<Test>]
   let ``testing random access`` () =
-    let toFingerTree arr = List.fold (||>) Empty arr
-    let stringToIndex str = [for c in str -> Value c] |> toFingerTree
+    let stringToIndex str = [for c in str -> Value c] |> listToRandomAccess
     let sft = stringToIndex "thisisnotatree"
     let sft2 = Operations.concat sft sft
     let _, split, _ = Operations.splitTree sft2 (fun x -> x.Value > 14) (Size(1))
@@ -94,9 +90,6 @@ module public FingerTreeTests =
   [<Test>]
   let ``testing a priority queue`` () =
     let strings = ["bb"; "ffffff"; "a"; "ccc"; "eeeee"; "dddd"]
-    let listToPriority l =
-      let accum acc x = acc ||> { Item = x; PriorityValue = String.length x }
-      List.fold accum Empty l
     let pft = listToPriority strings
     let (longest, q) = pop pft
     Assert.That(longest, Is.EqualTo("ffffff"))
@@ -109,7 +102,6 @@ module public FingerTreeTests =
 
   [<Test>]
   let ``testing an ordered sequence`` () =
-    let listToSequence l = List.fold insert Empty l
     let oft = listToSequence [1..20]
     let left, right = partition oft 16
     Assert.That((fmeasure left).Value, Is.EqualTo(Key(15)))
@@ -123,9 +115,6 @@ module public FingerTreeTests =
 
   [<Test>]
   let ``testing an interval tree`` () =
-    let listToIntervalTree l =
-      let accum acc (x, y) = acc ||> { low = x; high = y }
-      List.fold accum Empty l
     let it = listToIntervalTree [(1,2); (2,3); (3,4)]
     let miss = intervalSearch it { low = 10; high = 20 }
     Assert.That(Option.isNone miss, Is.EqualTo(true))
