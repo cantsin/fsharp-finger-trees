@@ -184,3 +184,5 @@ paket-files
 docs/content/license.md
 docs/content/release-notes.md
 /TestResult.xml
+/interop
+/src/interop/Interop.exe
