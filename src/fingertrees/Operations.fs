@@ -24,8 +24,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
                 Finger.prefix = Four(p1, p2, p3, p4);
                 Finger.content = content;
                 Finger.suffix = suffix } ->
-        let monoid = fmeasure a
-        let newAnnotation = monoid.mappend monoid annotation
+        let newAnnotation = this.monoid.mappend (fmeasure a) annotation
         let branchAnnotation = mconcat [p1; p2; p3]
         Digit { annotation = newAnnotation;
                 prefix = Two(a, p1);
@@ -35,8 +34,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
                 Finger.prefix = prefix;
                 Finger.content = content;
                 Finger.suffix = suffix } ->
-        let monoid = fmeasure a
-        let newAnnotation = monoid.mappend monoid annotation
+        let newAnnotation = this.monoid.mappend (fmeasure a) annotation
         let newPrefix =
           match prefix with
             | One(x) -> Two(a, x)
@@ -62,8 +60,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
                 Finger.prefix = prefix;
                 Finger.content = content;
                 Finger.suffix = Four(p1, p2, p3, p4) } ->
-        let monoid = fmeasure a
-        let newAnnotation = monoid.mappend annotation monoid
+        let newAnnotation = this.monoid.mappend annotation (fmeasure a)
         let branchAnnotation = mconcat [p1; p2; p3]
         Digit { annotation = newAnnotation;
                 prefix = prefix;
@@ -73,8 +70,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
                 Finger.prefix = prefix;
                 Finger.content = content;
                 Finger.suffix = suffix } ->
-        let monoid = fmeasure a
-        let newAnnotation = monoid.mappend annotation monoid
+        let newAnnotation = this.monoid.mappend annotation (fmeasure a)
         let newSuffix =
           match suffix with
             | One(x) -> Two(x, a)
@@ -123,8 +119,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
           match Operations.popl content with
             | View(inner, rest) ->
               let prefix = nodeToFinger(inner)
-              let monoid = fmeasure rest
-              let newAnnotation = monoid.mappend (mconcat [prefix; suffix]) (fmeasure rest)
+              let newAnnotation = this.monoid.mappend (mconcat [prefix; suffix]) (fmeasure rest)
               Digit { annotation = newAnnotation;
                       prefix = prefix;
                       content = rest;
@@ -140,8 +135,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             | Two(x, y) -> x, One(y)
             | Three(x, y, z) -> x, Two(y, z)
             | Four(x, y, z, w) -> x, Three(y, z, w) in
-            let monoid = fmeasure suffix
-            let newAnnotation = monoid.mappend monoid (monoid.mappend (fmeasure content) (fmeasure newPrefix))
+            let newAnnotation = this.monoid.mappend (mconcat [newPrefix; suffix]) (fmeasure content)
             View(l,
                  Digit { annotation = newAnnotation;
                          prefix = newPrefix;
@@ -164,8 +158,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
           match Operations.popr content with
             | View(inner, rest) ->
               let suffix = nodeToFinger(inner)
-              let monoid = fmeasure rest
-              let newAnnotation = monoid.mappend (mconcat [prefix; suffix]) (fmeasure rest)
+              let newAnnotation = this.monoid.mappend (mconcat [prefix; suffix]) (fmeasure rest)
               Digit { annotation = newAnnotation;
                       prefix = prefix;
                       content = rest;
@@ -181,8 +174,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             | Two(x, y) -> y, One(x)
             | Three(x, y, z) -> z, Two(x, y)
             | Four(x, y, z, w) -> w, Three(x, y, z) in
-            let monoid = fmeasure prefix
-            let newAnnotation = monoid.mappend monoid (monoid.mappend (fmeasure content) (fmeasure newSuffix))
+            let newAnnotation = this.monoid.mappend (mconcat [prefix; newSuffix]) (fmeasure content)
             View(l,
                  Digit { annotation = newAnnotation;
                          prefix = prefix;
@@ -264,18 +256,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
         let content = Operations._concat leftDigit.content middle' rightDigit.content
         let newPrefix = leftDigit.prefix
         let newSuffix = rightDigit.suffix
-        // annotations.
-        let monoid = fmeasure left
-        // TODO: reuse currently existing annotations
-        //let digitAnnotation = monoid.mappend leftDigit.annotation rightDigit.annotation
-        // let digitAnnotation = mconcat [left; right]
-        // let contentAnnotation =
-        //   if List.isEmpty middle then
-        //     digitAnnotation
-        //   else
-        //     monoid.mappend digitAnnotation (mconcat middle)
-        let affixAnnotation = mconcat [newPrefix; newSuffix]
-        let newAnnotation = monoid.mappend (fmeasure content) affixAnnotation
+        let newAnnotation = left.monoid.mappend (fmeasure content) (mconcat [newPrefix; newSuffix])
         Digit { annotation = newAnnotation;
                 prefix = newPrefix;
                 content = content;
@@ -349,9 +330,8 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
         assert (List.length suffix <= 4)
         let newPrefix = Operations<'V, 'T>._listToAffix prefix
         let newSuffix = Operations<'V, 'T>._listToAffix suffix
-        let monoid = fmeasure digit
         let list = List.concat [List.map fmeasure prefix; List.map fmeasure suffix]
-        let annotation = List.fold monoid.mappend monoid list
+        let annotation = List.fold digit.monoid.mappend (fmeasure digit) list
         Digit { annotation = annotation;
                 prefix = newPrefix;
                 content = digit;
@@ -371,8 +351,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
       | Empty ->
         failwith "split on an empty tree."
       | Single(x) ->
-        let monoid = fmeasure x
-        let starting = monoid.mappend value monoid
+        let starting = this.monoid.mappend value (fmeasure x)
         if predicate starting then
           Empty, x, Empty
         else
@@ -384,8 +363,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
         if not (predicate (annotation.mappend value annotation)) then
           failwith "split on a digit failed."
         else
-          let monoid = fmeasure prefix
-          let starting = monoid.mappend value monoid
+          let starting = this.monoid.mappend value (fmeasure prefix)
           let prefixList = Operations<'V, 'T>._affixToList prefix
           let suffixList = Operations<'V, 'T>._affixToList suffix
           if predicate starting then
@@ -394,10 +372,10 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             let newTree = Operations<'V, 'T>._digit after content suffixList
             let newBefore = Operations<'V, 'T>._chunkToTree before
             newBefore, hit, newTree
-          elif monoid.mappend starting (fmeasure content) |> predicate then
+          elif this.monoid.mappend starting (fmeasure content) |> predicate then
             // split point is in nested tree.
             let before, hit, after = Operations<'V, Node<'V, 'T>>.splitTree content predicate starting
-            let newValue = monoid.mappend (monoid.mappend value (fmeasure prefix)) (fmeasure before)
+            let newValue = this.monoid.mappend (this.monoid.mappend value (fmeasure prefix)) (fmeasure before)
             let newNode = Operations._nodeToList hit
             let (before', hit' :: after') = Operations<'V, 'T>._splitList newNode predicate newValue
             let prefixTree = Operations<'V, 'T>._digit prefixList before before'
@@ -405,7 +383,7 @@ type Operations<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V
             prefixTree, hit', suffixTree
           else
             // split point is in suffix.
-            let newValue = monoid.mappend starting (fmeasure content)
+            let newValue = this.monoid.mappend starting (fmeasure content)
             let (before, hit :: after) = Operations<'V, 'T>._splitList suffixList predicate newValue
             let newTree = Operations<'V, 'T>._digit prefixList content before
             let newAfter = Operations<'V, 'T>._chunkToTree after

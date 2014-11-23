@@ -53,11 +53,11 @@ module FingerTree =
     | Digit of Finger<'V, 'T>
     interface IMeasured<'V, 'T> with
       member this.fmeasure: 'V =
-        let monoid = Singleton<'V>.Instance
         match this with
-        | Empty -> monoid.mempty
+        | Empty -> this.monoid.mempty
         | Single(x) -> fmeasure x
         | Digit(d) -> d.annotation
+    member this.monoid: 'V = Singleton<'V>.Instance
 
   type View<'V, 'T when 'V :> IMonoid<'V> and 'T :> IMeasured<'V, 'T> and 'V: (new: unit -> 'V)> =
     | EmptyTree
