@@ -118,6 +118,13 @@ Target "Build" (fun _ ->
     |> ignore
 )
 
+let testReferences =
+    !+ "./tests/**/*.fsproj"
+          |> Scan
+
+Target "BuildTests" (fun _ ->
+    MSBuildDebug "tests" "Build" testReferences |> Log "TestBuild-Output: ")
+
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner
 
@@ -265,7 +272,9 @@ Target "All" DoNothing
 "Clean"
   ==> "AssemblyInfo"
   ==> "Build"
-  ==> "RunTests"
+// disabled for now
+//  ==> "BuildTests"
+//  ==> "RunTests"
   =?> ("GenerateReferenceDocs",isLocalBuild && not isMono)
   =?> ("GenerateDocs",isLocalBuild && not isMono)
   ==> "All"
